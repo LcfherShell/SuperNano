@@ -1,2 +1,2 @@
 # SuperNano
-Ini adalah Aplikasi Editor berbasis TUI
+Ini adalah Aplikasi Text-Editor berbasis TUI
