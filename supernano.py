@@ -125,30 +125,9 @@ class PlainButton(urwid.Button):
     button_left = urwid.Text("")
     button_right = urwid.Text("")
 
-
-class ClipboardTextBox(urwid.Edit):
-    def keypress(self, size, key):
-        if key == "ctrl c":
-            self.copy_to_clipboard()
-        elif key == "ctrl v":
-            self.paste_from_clipboard()
-        else:
-            return super().keypress(size, key)
-
-    def copy_to_clipboard(self):
-        self.clipboard = self.get_edit_text()
-
-    def paste_from_clipboard(self):
-        if hasattr(self, "clipboard"):
-            cursor_pos = self.edit_pos
-            text = self.get_edit_text()
-            self.set_edit_text(text[:cursor_pos] + self.clipboard + text[cursor_pos:])
-            self.edit_pos = cursor_pos + len(self.clipboard)
-
-
-class FileBrowserApp:
+class SuperNano:
     """
-    Kelas FileBrowserApp yang sedang Anda kembangkan adalah text editor berbasis console yang menggunakan Python 3.6 ke atas dengan dukungan urwid[curses].
+    Kelas SuperNano yang sedang Anda kembangkan adalah text editor berbasis TUI yang menggunakan Python versi 3.6 ke atas dan module python urwid[curses].
     
     Pembuat: Ramsyan Tungga Kiansantang (ID)  |  Github: LcfherShell  
 
@@ -651,7 +630,7 @@ class FileBrowserApp:
 
 
 def main(path: str):
-    app = FileBrowserApp(start_path=path)
+    app = SuperNano(start_path=path)
     app.run()
 
 
