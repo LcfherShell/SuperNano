@@ -11,7 +11,7 @@ Berikut adalah dokumentasi untuk script `SuperNano`, sebuah text editor berbasis
 - **Text Editing**: Editor teks dengan dukungan multiline, undo-redo, copy-paste, dan penyimpanan file.
 - **File Management**: Memungkinkan navigasi direktori, membuka dan menyimpan file, serta membuat dan menghapus file.
 - **Module Inspection**: Fitur untuk melakukan inspeksi modul Python, menampilkan informasi tentang variabel global, kelas, dan fungsi yang ada di dalam modul.
-- **Custom Popups**: Menampilkan popup dialog untuk konfirmasi tindakan tertentu seperti menyimpan, menghapus file, atau keluar dari aplikasi.
+
 
 ## Kelas dan Metode
 
