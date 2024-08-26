@@ -66,10 +66,11 @@ for handler in logging.root.handlers[:]:
 
 logging.basicConfig(
     filename=fileloogiing,
-    filemode="a",
+    filemode="w",
+    encoding=sys.getfilesystemencoding(),
     format="%(asctime)s, %(msecs)d %(name)s %(levelname)s [ %(filename)s-%(module)s-%(lineno)d ]  : %(message)s",
     datefmt="%H:%M:%S",
-    level=logging.DEBUG,
+    level=logging.ERROR,
 )
 logging.getLogger('urwid').disabled = True
 logger = logging.getLogger('urwid')
@@ -140,6 +141,45 @@ class PlainButton(urwid.Button):
 
     button_left = urwid.Text("")
     button_right = urwid.Text("")
+
+class EditableButton(urwid.WidgetWrap):
+    def __init__(self, label, on_save):
+        self.label = label
+        self.on_save = on_save
+        self.button = PlainButton(label)
+        self.last_click_time = 0
+        urwid.connect_signal(self.button, 'click', self.on_click)
+        self._w = self.button
+
+    def on_click(self, button):
+        current_time = time.time()
+        # Check for double click within 0.3 seconds
+        if current_time - self.last_click_time < 0.3:
+            self.edit_text(button)
+        self.last_click_time = current_time
+
+    def edit_text(self, button):
+        self.edit = urwid.Edit(multiline=False, edit_text=self.label)
+        urwid.connect_signal(self.edit, 'change', self.on_change)
+        self._w = urwid.AttrMap(self.edit, None, focus_map='reversed')
+
+    def on_change(self, edit, new_text):
+        self.label = new_text
+
+    def keypress(self, size, key):
+        if isinstance(self._w.base_widget, urwid.Edit):
+            if key == 'enter':
+                self.save_and_restore()
+            else:
+                return self._w.keypress(size, key)
+        else:
+            return super().keypress(size, key)
+
+    def save_and_restore(self):
+        self.on_save(self.label)
+        self.button = PlainButton(self.label)
+        urwid.connect_signal(self.button, 'click', self.on_click)
+        self._w = self.button
 
 
 class ClipboardTextBox(urwid.Edit):
@@ -274,7 +314,7 @@ class SuperNano:
         urwid.connect_signal(self.quit_button, "click", self.quit_app)
 
         self.search_edit = urwid.Edit(
-            "Search or Create: ", multiline=False, align="left"
+            "Search, Rename or Create: ", multiline=False, align="left"
         )
         search_limited = urwid.BoxAdapter(
             urwid.Filler(self.search_edit, valign="top"), height=1
@@ -587,7 +627,7 @@ class SuperNano:
         else:
             if validate_folder(os.path.dirname(file_path)):
                 try:
-                    with open(file_path, "r+", encoding="utf-8") as f:
+                    with open(file_path, "r+", encoding=sys.getfilesystemencoding()) as f:
                         content = f.read()
                 except UnicodeDecodeError:
                     with open(file_path, "r+", encoding="latin-1") as f:
@@ -613,8 +653,12 @@ class SuperNano:
         "Menyimpan perubahan yang dilakukan pada file saat ini dan mengembalikan status keberhasilan."
         if self.current_file_name:
             file_path = os.path.join(self.current_path, self.current_file_name)
-            with open(file_path, "w+", encoding="utf-8") as f:
-                f.write(self.text_editor.get_edit_text())
+            try:
+                with open(file_path, "w+", encoding=sys.getfilesystemencoding()) as f:
+                    f.write(self.text_editor.get_edit_text())
+            except:
+                with open(file_path, "w+", encoding="latin-1") as f:
+                    f.write(self.text_editor.get_edit_text())
             self.footer_text.set_text("File saved successfully!")
         return True
 
@@ -687,7 +731,7 @@ class SuperNano:
         "Mencari file atau folder berdasarkan input pencarian, membuka file jika ditemukan, atau memperbarui daftar file jika folder ditemukan."
         search_query = self.search_edit.get_edit_text().replace("\\", "/").strip()
         if search_query:
-            if ":" in search_query:
+            if ":" in search_query and not search_query.startswith("@[files]"):
                 if os.path.isfile(search_query):
                     dirname, file_name = os.path.dirname(
                         search_query
@@ -751,14 +795,33 @@ class SuperNano:
                         self.footer_text.set_text(
                             f"Search results for '{search_query}'"
                         )
-                    elif search_resultsHighlight_Text:
+                    elif search_resultsHighlight_Text and not search_query.startswith("@[files]"):
                         self.footer_text.set_text(
                             f"Search results for '{search_query}' {search_resultsHighlight_Text}"
                         )
                     else:
-                        self.footer_text.set_text(
-                            f"Search results for '{search_resultsHighlight_Text}'"
-                        )
+                        if search_query.startswith("@[files]") and search_query.find("[@rename]")>-1:
+                            x = search_query.replace("@[files]", "", 1).split("[@rename]", 1)
+                            if x.__len__()==2:
+                                getREName = [f for f in os.listdir(self.current_path) if x[0] in f]
+                                if getREName.__len__()>0:
+                                    oldfilesorfolder, newplace = [
+                                         os.path.join(self.current_path, getREName[0]),  
+                                         os.path.join(self.current_path, x[1]),
+                                    ]
+                                    try:
+                                        os.rename(oldfilesorfolder, newplace)
+                                        self.footer_text.set_text(
+                                            f"Rename {getREName[0]} success"
+                                        )
+                                        self.update_ui()
+                                        self.file_list[:] = self.get_file_list()
+                                    except:
+                                        pass
+                        else:
+                            self.footer_text.set_text(
+                                f"Search results for {search_query}"
+                            )
 
         else:
             self.file_list[:] = self.get_file_list()
