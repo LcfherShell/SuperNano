@@ -195,6 +195,9 @@ class SuperNano:
     def switch_to_secondary_layout(self):
         "Mengubah layout aplikasi ke menu utama yang telah disiapkan."
         self.setup_main_menu()
+        if self.loading_alarm != None:
+            self.loop.remove_alarm(self.loading_alarm)  # Hentikan alarm loading jika masih ada
+            self.loading_alarm = None
         self.loop.widget = self.main_layout
 
     @complex_handle_errors(loggering=logging)
