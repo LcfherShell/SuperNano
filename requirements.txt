@@ -1,0 +1,6 @@
+windows-curses==2.3.3
+urwid==2.6.15
+pyperclip==1.9.0
+psutil
+logging
+httpx
