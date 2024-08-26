@@ -63,6 +63,12 @@ Kelas ini bertanggung jawab untuk memuat dan menginspeksi modul-modul Python. In
 6. **Inspeksi Modul**: Pilih modul dari daftar yang tersedia di UI untuk menampilkan informasi tentang modul tersebut.
 7. **Keluar dari Aplikasi**: Tekan `Ctrl+Q` atau `ESC` untuk keluar dari aplikasi.
 
+## Cara Penggunaan
+Jalankan script ini melalui command line dengan memberikan argumen berupa path file atau direktori yang ingin diedit. Contoh:
+```
+python supernano.py /path/to/directory_or_file
+```
+
 ## Lisensi
 Aplikasi ini dibuat oleh Ramsyan Tungga Kiansantang dan dilisensikan di bawah [Lisensi GPL v3](https://www.gnu.org/licenses/gpl-3.0.html). Untuk kontribusi atau pelaporan bug, silakan kunjungi repositori Github yang telah disediakan.
 
@@ -72,4 +78,7 @@ Aplikasi ini dibuat oleh Ramsyan Tungga Kiansantang dan dilisensikan di bawah [L
 
 ---
 
-Dengan dokumentasi ini, Anda dapat memahami bagaimana `SuperNano` bekerja dan bagaimana menggunakannya secara efektif.
+## Kesimpulan
+`SuperNano` adalah editor teks berbasis konsol yang dirancang untuk memudahkan pengelolaan file dan direktori secara langsung dari command line. Aplikasi ini menawarkan alat yang kuat untuk pengguna yang bekerja di lingkungan berbasis teks.
+
+Jika ada pertanyaan atau butuh bantuan lebih lanjut terkait implementasi, jangan ragu untuk menghubungi pengembang atau melihat dokumentasi tambahan yang mungkin tersedia.
