@@ -289,6 +289,7 @@ class SuperNano:
     def load_main_menu(self):
         "Menyiapkan dan menampilkan menu utama setelah periode loading, dan menghapus alarm loading."
         # self.loading_widget.set_text("Press key R")
+        set_low_priority(os.getpid())
         self.loop.remove_alarm(self.loading_alarm)  # Hentikan alarm
         self.loading_alarm = None
         self.switch_to_secondary_layout()
