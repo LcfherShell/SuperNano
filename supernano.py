@@ -72,10 +72,11 @@ logging.basicConfig(
     datefmt="%H:%M:%S",
     level=logging.ERROR,
 )
-logging.getLogger('urwid').disabled = True
-logger = logging.getLogger('urwid')
+logging.getLogger("urwid").disabled = True
+logger = logging.getLogger("urwid")
 for handler in logger.handlers[:]:
     logger.removeHandler(handler)
+
 
 def setTitle(title: str):
     """
@@ -142,13 +143,14 @@ class PlainButton(urwid.Button):
     button_left = urwid.Text("")
     button_right = urwid.Text("")
 
+
 class EditableButton(urwid.WidgetWrap):
     def __init__(self, label, on_save):
         self.label = label
         self.on_save = on_save
         self.button = PlainButton(label)
         self.last_click_time = 0
-        urwid.connect_signal(self.button, 'click', self.on_click)
+        urwid.connect_signal(self.button, "click", self.on_click)
         self._w = self.button
 
     def on_click(self, button):
@@ -160,15 +162,15 @@ class EditableButton(urwid.WidgetWrap):
 
     def edit_text(self, button):
         self.edit = urwid.Edit(multiline=False, edit_text=self.label)
-        urwid.connect_signal(self.edit, 'change', self.on_change)
-        self._w = urwid.AttrMap(self.edit, None, focus_map='reversed')
+        urwid.connect_signal(self.edit, "change", self.on_change)
+        self._w = urwid.AttrMap(self.edit, None, focus_map="reversed")
 
     def on_change(self, edit, new_text):
         self.label = new_text
 
     def keypress(self, size, key):
         if isinstance(self._w.base_widget, urwid.Edit):
-            if key == 'enter':
+            if key == "enter":
                 self.save_and_restore()
             else:
                 return self._w.keypress(size, key)
@@ -178,7 +180,7 @@ class EditableButton(urwid.WidgetWrap):
     def save_and_restore(self):
         self.on_save(self.label)
         self.button = PlainButton(self.label)
-        urwid.connect_signal(self.button, 'click', self.on_click)
+        urwid.connect_signal(self.button, "click", self.on_click)
         self._w = self.button
 
 
@@ -342,17 +344,17 @@ class SuperNano:
             [
                 (
                     "weight",
-                    2,
+                    3,
                     urwid.AttrMap(search_limited, None, focus_map="reversed"),
                 ),
                 (
                     "weight",
-                    3,
+                    1,
                     urwid.AttrMap(padded_button, None, focus_map="reversed"),
                 ),
                 (
                     "weight",
-                    1,
+                    2,
                     urwid.AttrMap(self.quit_button, None, focus_map="reversed"),
                 ),
                 # (
@@ -377,16 +379,16 @@ class SuperNano:
                     ),
                     (
                         "weight",
-                        2,
-                        urwid.LineBox(
-                            urwid.Pile([self.text_editor_scrollable]), title="TextBox"
+                        1,
+                        urwid.AttrMap(
+                            self.main_layoutModules, None, focus_map="reversed"
                         ),
                     ),
                     (
                         "weight",
                         3,
-                        urwid.AttrMap(
-                            self.main_layoutModules, None, focus_map="reversed"
+                        urwid.LineBox(
+                            urwid.Pile([self.text_editor_scrollable]), title="TextBox"
                         ),
                     ),
                 ]
@@ -399,7 +401,6 @@ class SuperNano:
             lambda loop, user_data: self.system_usage(),
         )
         urwid.TrustedLoop(self.loop).set_widget(self.main_layout)
-        
 
     @complex_handle_errors(loggering=logging, nomessagesNormal=False)
     def create_modules_menus(self, listmodulename: list):
@@ -627,7 +628,9 @@ class SuperNano:
         else:
             if validate_folder(os.path.dirname(file_path)):
                 try:
-                    with open(file_path, "r+", encoding=sys.getfilesystemencoding()) as f:
+                    with open(
+                        file_path, "r+", encoding=sys.getfilesystemencoding()
+                    ) as f:
                         content = f.read()
                 except UnicodeDecodeError:
                     with open(file_path, "r+", encoding="latin-1") as f:
@@ -795,19 +798,30 @@ class SuperNano:
                         self.footer_text.set_text(
                             f"Search results for '{search_query}'"
                         )
-                    elif search_resultsHighlight_Text and not search_query.startswith("@[files]"):
+                    elif search_resultsHighlight_Text and not search_query.startswith(
+                        "@[files]"
+                    ):
                         self.footer_text.set_text(
                             f"Search results for '{search_query}' {search_resultsHighlight_Text}"
                         )
                     else:
-                        if search_query.startswith("@[files]") and search_query.find("[@rename]")>-1:
-                            x = search_query.replace("@[files]", "", 1).split("[@rename]", 1)
-                            if x.__len__()==2:
-                                getREName = [f for f in os.listdir(self.current_path) if x[0] in f]
-                                if getREName.__len__()>0:
+                        if (
+                            search_query.startswith("@[files]")
+                            and search_query.find("[@rename]") > -1
+                        ):
+                            x = search_query.replace("@[files]", "", 1).split(
+                                "[@rename]", 1
+                            )
+                            if x.__len__() == 2:
+                                getREName = [
+                                    f
+                                    for f in os.listdir(self.current_path)
+                                    if x[0] in f
+                                ]
+                                if getREName.__len__() > 0:
                                     oldfilesorfolder, newplace = [
-                                         os.path.join(self.current_path, getREName[0]),  
-                                         os.path.join(self.current_path, x[1]),
+                                        os.path.join(self.current_path, getREName[0]),
+                                        os.path.join(self.current_path, x[1]),
                                     ]
                                     try:
                                         os.rename(oldfilesorfolder, newplace)
@@ -849,7 +863,7 @@ class SuperNano:
     def update_ui(self):
         "Memperbarui tampilan UI aplikasi."
         self.loop.draw_screen()
-    
+
     def update_uiV2(self, *args, **kwargs):
         "Memperbarui tampilan UI aplikasi."
         self.loop.set_alarm_in(timeout_v2(), self.update_uiV2)
