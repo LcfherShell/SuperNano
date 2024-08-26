@@ -63,4 +63,8 @@ Aplikasi ini dibuat oleh Ramsyan Tungga Kiansantang dan dilisensikan di bawah [L
 
 ---
 
-Dengan dokumentasi ini, Anda dapat memahami bagaimana `SuperNano` bekerja dan bagaimana menggunakannya secara efektif.
+## Kesimpulan
+`SuperNano` adalah editor teks berbasis konsol yang dirancang untuk memudahkan pengelolaan file dan direktori secara langsung dari command line. Aplikasi ini menawarkan alat yang kuat untuk pengguna yang bekerja di lingkungan berbasis teks.
+
+Jika ada pertanyaan atau butuh bantuan lebih lanjut terkait implementasi, jangan ragu untuk menghubungi pengembang atau melihat dokumentasi tambahan yang mungkin tersedia.
+
