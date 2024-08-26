@@ -223,40 +223,53 @@ class SuperNano:
 
         self.current_file_name = None  # Track current file name
         self.undo_stack, self.redo_stack = [[], []]  # Stack for undo  # Stack for redo
-        self.overlay = None  # Overlay untuk popup
-        self.modulepython = ModuleInspector()  # memuat module python
+        self.overlay_POPUP = None  # Overlay untuk popup
+        self.module_package_Python = ModuleInspector()  # memuat module python
 
         # Set title
         setTitle("Win-SuperNano v{version}".format(version=__version__))
 
         # Create widgets
+        """
+        1.loading menu 
+        2. main menu: search, list file or folder, and inspect module python
+        """
 
+        ######Create widgets modulepython menu
         def create_button(module_name):
             button = PlainButton(module_name)
             urwid.connect_signal(button, "click", self.inspect_module, module_name)
             return urwid.AttrMap(button, None, focus_map="reversed")
 
-        self.listmodulesUI = urwid.SimpleFocusListWalker(
-            [create_button(module) for module in self.modulepython.get_module(sys.path)]
+        self.listmodules_from_package_Python = urwid.SimpleFocusListWalker(
+            [
+                create_button(module)
+                for module in self.module_package_Python.get_module(sys.path)
+            ]
         )
         # Footer text and ListBox for scrolling
-        self.footer_text_Modules = urwid.Text("Select a module to inspect.")
-        self.footer_listbox_Modules = urwid.ListBox(
-            urwid.SimpleFocusListWalker([self.footer_text_Modules])
+        self.Text_Deinspect_modules_from_package_Python = urwid.Text(
+            "Select a module to inspect."
         )
-        self.footer_box_Modules = urwid.BoxAdapter(
-            self.footer_listbox_Modules, 14
+        MenuText_Inspect_modules_from_package_Python = urwid.ListBox(
+            urwid.SimpleFocusListWalker(
+                [self.Text_Deinspect_modules_from_package_Python]
+            )
+        )
+        Box_Deinspect_modules_from_package_Python = urwid.BoxAdapter(
+            MenuText_Inspect_modules_from_package_Python, 14
         )  # Set max height for the footer
         # Use a Frame to wrap the main content and footer
-        self.main_layoutModules = urwid.Frame(
+        self.Inspect_modules_from_package_Python = urwid.Frame(
             body=urwid.LineBox(
-                urwid.ListBox(self.listmodulesUI), title="Python Modules"
+                urwid.ListBox(self.listmodules_from_package_Python),
+                title="Python Modules",
             ),
-            footer=self.footer_box_Modules,
+            footer=Box_Deinspect_modules_from_package_Python,
         )
 
-        ############
-        self.title_widget = urwid.Text(
+        ###Create widgets loading menu
+        self.title_loading_widget = urwid.Text(
             "Win-SuperNano v{version} CopyRight: LcfherShell@{year}\n".format(
                 version=__version__, year=datetime.now().year
             ),
@@ -264,16 +277,17 @@ class SuperNano:
         )
         self.loading_widget = urwid.Text("Loading, please wait...", align="center")
         self.main_layout = urwid.Filler(
-            urwid.Pile([self.title_widget, self.loading_widget]), valign="middle"
+            urwid.Pile([self.title_loading_widget, self.loading_widget]),
+            valign="middle",
         )
 
-        # Create menu
-        self.menu_columns = urwid.Columns([])
-        self.menu_pile = urwid.Pile([self.menu_columns])
-
-        # Create footer and status text
-        self.footer_text = urwid.Text("Press ctrl + q to exit, Arrow keys to navigate")
-        self.status_text = urwid.Text(
+        # Create main menu
+        self.main_menu_columns = urwid.Columns([])
+        self.main_menu_pile = urwid.Pile([self.main_menu_columns])
+        self.status_msg_footer_text = urwid.Text(
+            "Press ctrl + q to exit, Arrow keys to navigate"
+        )
+        self.main_footer_text = urwid.Text(
             "Ctrl+S : Save file    Ctrl+D : Delete File    Ctrl+Z : Undo Edit    Ctrl+Y : Redo Edit    Ctrl+E : Redirect input   Ctrl+R : Refresh UI    ESC: Quit "
         )
 
@@ -298,7 +312,9 @@ class SuperNano:
         "Mengubah layout aplikasi ke menu utama yang telah disiapkan."
         self.setup_main_menu()
         if self.loading_alarm != None:
-            self.loop.remove_alarm(self.loading_alarm)  # Hentikan alarm loading jika masih ada
+            self.loop.remove_alarm(
+                self.loading_alarm
+            )  # Hentikan alarm loading jika masih ada
             self.loading_alarm = None
         self.loop.widget = self.main_layout
 
@@ -344,7 +360,7 @@ class SuperNano:
         )
 
         # Menu layout
-        self.menu_columns = urwid.Columns(
+        self.main_menu_columns = urwid.Columns(
             [
                 (
                     "weight",
@@ -369,11 +385,11 @@ class SuperNano:
             ]
         )
 
-        self.menu_pile = urwid.Pile([self.menu_columns])
+        self.main_menu_pile = urwid.Pile([self.main_menu_columns])
 
         # Layout
         self.main_layout = urwid.Frame(
-            header=self.menu_pile,
+            header=self.main_menu_pile,
             body=urwid.Columns(
                 [
                     (
@@ -385,7 +401,9 @@ class SuperNano:
                         "weight",
                         1,
                         urwid.AttrMap(
-                            self.main_layoutModules, None, focus_map="reversed"
+                            self.Inspect_modules_from_package_Python,
+                            None,
+                            focus_map="reversed",
                         ),
                     ),
                     (
@@ -397,7 +415,7 @@ class SuperNano:
                     ),
                 ]
             ),
-            footer=urwid.Pile([self.footer_text, self.status_text]),
+            footer=urwid.Pile([self.status_msg_footer_text, self.main_footer_text]),
         )
         self.loop.set_alarm_in(timeout_v2(), self.update_uiV2)
         self.system_alarm = self.loop.set_alarm_in(
@@ -417,7 +435,7 @@ class SuperNano:
 
     @complex_handle_errors(loggering=logging, nomessagesNormal=False)
     def inspect_module(self, button, module_name):
-        result = self.modulepython.inspect_module(module_name)
+        result = self.module_package_Python.inspect_module(module_name)
         if result:
             result_text = f"Module: {result['module']}\n\nGlobal Variables:\n"
             result_text += "\n".join(result["global_variables"]) + "\n\nClasses:\n"
@@ -428,9 +446,11 @@ class SuperNano:
                 result_text += "  Functions:\n"
                 for func in cls["functions"]:
                     result_text += f" > {func['name']}{func['params']}\n\n"
-            self.footer_text_Modules.set_text(result_text)
+            self.Text_Deinspect_modules_from_package_Python.set_text(result_text)
         else:
-            self.footer_text_Modules.set_text("Error inspecting module.")
+            self.Text_Deinspect_modules_from_package_Python.set_text(
+                "Error inspecting module."
+            )
 
     @complex_handle_errors(loggering=logging, nomessagesNormal=False)
     def setup_popup(self, options, title, descrip: str = ""):
@@ -469,7 +489,7 @@ class SuperNano:
         # Tentukan ukuran dan posisi popup
         popup_width = 35
         popup_height = 25
-        self.overlay = urwid.Overlay(
+        self.overlay_POPUP = urwid.Overlay(
             self.popup,
             self.main_layout,
             "center",
@@ -477,12 +497,12 @@ class SuperNano:
             "middle",
             ("relative", popup_height),
         )
-        self.loop.widget = self.overlay
+        self.loop.widget = self.overlay_POPUP
 
     @complex_handle_errors(loggering=logging, nomessagesNormal=False)
     def close_popup(self, button):
         "Menutup popup menu dan mengembalikan tampilan ke layout utama."
-        self.overlay = None
+        self.overlay_POPUP = None
         self.loop.widget = self.main_layout
 
     @complex_handle_errors(loggering=logging, nomessagesNormal=False)
@@ -573,7 +593,7 @@ class SuperNano:
             if hasattr(current_edit, "edit_pos") and hasattr(
                 current_edit, "get_edit_text"
             ):
-                self.footer_text.set_text("Text copied to clipboard.")
+                self.status_msg_footer_text.set_text("Text copied to clipboard.")
                 cursor_position = current_edit.edit_pos
                 pyperclip.copy(
                     current_edit.get_edit_text()[cursor_position:]
@@ -606,7 +626,7 @@ class SuperNano:
                 # Set teks baru dan sesuaikan posisi kursor
                 current_edit.set_edit_text(new_text)
                 current_edit.set_edit_pos(cursor_position + len(pasted_text))
-                self.footer_text.set_text("Text paste from clipboard.")
+                self.status_msg_footer_text.set_text("Text paste from clipboard.")
 
     @complex_handle_errors(loggering=logging, nomessagesNormal=False)
     def go_up_directory(self, button):
@@ -628,7 +648,7 @@ class SuperNano:
                 self.current_path = file_path
                 self.file_list[:] = self.get_file_list()
             else:
-                self.footer_text.set_text("Folder access denied!")
+                self.status_msg_footer_text.set_text("Folder access denied!")
         else:
             if validate_folder(os.path.dirname(file_path)):
                 try:
@@ -645,15 +665,17 @@ class SuperNano:
                 self.current_file_name = file_name  # Track the current file name
 
                 # if str(ext).lower() in ( ".pyx", ".pyz", ".py"):
-                #    self.listmodulesUI[:] = self.modules_menus(self.current_path)
+                #    self.listmodules_from_package_Python[:] = self.modules_menus(self.current_path)
 
                 self.main_layout.body.contents[1][0].set_title(file_name)
 
             else:
-                self.footer_text.set_text("File access denied!")
+                self.status_msg_footer_text.set_text("File access denied!")
 
         if str(ext).lower().startswith((".pyx", ".pyz", ".py")) != True:
-            self.footer_text_Modules.set_text("Select a module to inspect.")
+            self.Text_Deinspect_modules_from_package_Python.set_text(
+                "Select a module to inspect."
+            )
 
     @complex_handle_errors(loggering=logging, nomessagesNormal=False)
     def save_file(self):
@@ -666,7 +688,7 @@ class SuperNano:
             except:
                 with open(file_path, "w+", encoding="latin-1") as f:
                     f.write(self.text_editor.get_edit_text())
-            self.footer_text.set_text("File saved successfully!")
+            self.status_msg_footer_text.set_text("File saved successfully!")
         return True
 
     @complex_handle_errors(loggering=logging, nomessagesNormal=False)
@@ -678,10 +700,10 @@ class SuperNano:
                 os.remove(file_path)
                 self.text_editor.set_edit_text("")
                 self.file_list[:] = self.get_file_list()
-                self.footer_text.set_text("File deleted successfully!")
+                self.status_msg_footer_text.set_text("File deleted successfully!")
                 self.current_file_name = None  # Clear the current file name
             else:
-                self.footer_text.set_text("File does not exist!")
+                self.status_msg_footer_text.set_text("File does not exist!")
         return True
 
     @complex_handle_errors(loggering=logging, nomessagesNormal=False)
@@ -702,7 +724,7 @@ class SuperNano:
             # Restore the last state
             last_state = self.undo_stack.pop()
             self.text_editor.set_edit_text(last_state)
-            self.footer_text.set_text("Undo performed.")
+            self.status_msg_footer_text.set_text("Undo performed.")
 
     @complex_handle_errors(loggering=logging, nomessagesNormal=False)
     def redo_edit(self):
@@ -714,7 +736,7 @@ class SuperNano:
             # Restore the last redone state
             last_state = self.redo_stack.pop()
             self.text_editor.set_edit_text(last_state)
-            self.footer_text.set_text("Redo performed.")
+            self.status_msg_footer_text.set_text("Redo performed.")
 
     @complex_handle_errors(loggering=logging, nomessagesNormal=False)
     def highlight_text(self, search_text):
@@ -772,40 +794,46 @@ class SuperNano:
                 if dirname:
                     self.current_path = dirname
                     self.file_list[:] = self.get_file_list()
-                self.footer_text.set_text(f"Search results for '{search_query}'")
+                self.status_msg_footer_text.set_text(
+                    f"Search results for '{search_query}'"
+                )
             else:
                 search_resultsFile = [
                     f for f in os.listdir(self.current_path) if search_query in f
                 ]
                 search_resultsModule = [
                     module
-                    for module in self.modulepython.curents
+                    for module in self.module_package_Python.curents
                     if search_query in module
                 ]
                 search_resultsHighlight_Text = self.highlight_text(search_query)
 
                 if search_resultsFile and search_resultsModule:
-                    self.listmodulesUI[:] = self.create_modules_menus(
+                    self.listmodules_from_package_Python[:] = self.create_modules_menus(
                         search_resultsModule
                     )
                     self.file_list[:] = self.create_file_list(search_resultsFile)
-                    self.footer_text.set_text(f"Search results for '{search_query}'")
+                    self.status_msg_footer_text.set_text(
+                        f"Search results for '{search_query}'"
+                    )
                 elif search_resultsFile:
                     self.file_list[:] = self.create_file_list(search_resultsFile)
-                    self.footer_text.set_text(f"Search results for '{search_query}'")
+                    self.status_msg_footer_text.set_text(
+                        f"Search results for '{search_query}'"
+                    )
                 else:
                     if search_resultsModule:
-                        self.listmodulesUI[:] = self.create_modules_menus(
-                            search_resultsModule
-                        )
+                        self.listmodules_from_package_Python[
+                            :
+                        ] = self.create_modules_menus(search_resultsModule)
                         self.file_list[:] = self.get_file_list()
-                        self.footer_text.set_text(
+                        self.status_msg_footer_text.set_text(
                             f"Search results for '{search_query}'"
                         )
                     elif search_resultsHighlight_Text and not search_query.startswith(
                         "@[files]"
                     ):
-                        self.footer_text.set_text(
+                        self.status_msg_footer_text.set_text(
                             f"Search results for '{search_query}' {search_resultsHighlight_Text}"
                         )
                     else:
@@ -829,7 +857,7 @@ class SuperNano:
                                     ]
                                     try:
                                         os.rename(oldfilesorfolder, newplace)
-                                        self.footer_text.set_text(
+                                        self.status_msg_footer_text.set_text(
                                             f"Rename {getREName[0]} success"
                                         )
                                         self.update_ui()
@@ -837,14 +865,16 @@ class SuperNano:
                                     except:
                                         pass
                         else:
-                            self.footer_text.set_text(
+                            self.status_msg_footer_text.set_text(
                                 f"Search results for {search_query}"
                             )
 
         else:
             self.file_list[:] = self.get_file_list()
-            self.listmodulesUI[:] = self.create_modules_menus(self.modulepython.curents)
-            self.footer_text.set_text("")
+            self.listmodules_from_package_Python[:] = self.create_modules_menus(
+                self.module_package_Python.curents
+            )
+            self.status_msg_footer_text.set_text("")
 
     @complex_handle_errors(loggering=logging)
     def create_file_list(self, files):
@@ -862,7 +892,7 @@ class SuperNano:
         "Memantau penggunaan CPU dan menampilkan peringatan jika konsumsi CPU tinggi."
         timemming = timeout_v1()
         if timemming > 0.87:
-            self.footer_text.set_text("High CPU utilization alert")
+            self.status_msg_footer_text.set_text("High CPU utilization alert")
 
     def update_ui(self):
         "Memperbarui tampilan UI aplikasi."
@@ -885,6 +915,7 @@ class SuperNano:
         self.loop.run()
 
 
+@complex_handle_errors(loggering=logging)
 def main(path: str):
     app = SuperNano(start_path=path)
     app.run()
