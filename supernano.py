@@ -8,7 +8,7 @@ try:
     from libs.cmd_filter import shorten_path, validate_folder
     from libs.errrorHandler import complex_handle_errors
     from libs.system_manajemen import set_low_priority, SafeProcessExecutor
-    from libs.filemanager import StreamFile
+    from libs.filemanager import StreamFile, all_system_paths, resolve_relative_path_v2
     from libs.timeout import timeout_v2
     
 except:
@@ -17,24 +17,25 @@ except:
         from .cmd_filter import shorten_path, validate_folder
         from .errrorHandler import complex_handle_errors
         from .system_manajemen import set_low_priority, SafeProcessExecutor
+        from .filemanager import StreamFile, all_system_paths, resolve_relative_path_v2
         from .timeout import timeout_v2
-        from .filemanager import StreamFile
     except:
         from titlecommand import get_console_title, set_console_title
         from cmd_filter import shorten_path, validate_folder
         from errrorHandler import complex_handle_errors
         from system_manajemen import set_low_priority, SafeProcessExecutor
+        from filemanager import StreamFile, all_system_paths, resolve_relative_path_v2
         from timeout import timeout_v2
-        from filemanager import StreamFile
         
 
 set_low_priority(os.getpid())
 #########mendapatkan process terbaik tanpa membebani ram dan cpu
 
 __version__ = "1.0.0"
+thisfolder, _x = all_system_paths
 
 logging.basicConfig(
-    level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s"
+    level=logging.ERROR, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
 
@@ -163,7 +164,7 @@ class SuperNano:
         if self.file_to_open:
             self.open_file_dir(self.file_to_open)
 
-    @complex_handle_errors()
+    @complex_handle_errors(loggering=logging, nomessagesNormal=False)
     def save_current_state(self):
         """
         Save the current state of the text block for undo functionality.
@@ -172,7 +173,7 @@ class SuperNano:
         if not self.undo_stack or self.undo_stack[-1] != current_text:
             self.undo_stack.append(current_text)
 
-    @complex_handle_errors()
+    @complex_handle_errors(loggering=logging, nomessagesNormal=False)
     def undo_last_edit(self):
         """
         Undo the last edit by reverting to the previous state.
@@ -183,7 +184,7 @@ class SuperNano:
                 last_state = self.undo_stack[-1]  # Get the previous state
                 self.edit_text_block.set_text(last_state)
     
-    @complex_handle_errors()
+    @complex_handle_errors(loggering=logging, nomessagesNormal=False)
     def open_new_directory(self):
         """
         Open and list the contents of a new directory.
@@ -225,7 +226,7 @@ class SuperNano:
         self.file_menu.clear()
         self.file_menu.add_item_list(files)
     
-    @complex_handle_errors()
+    @complex_handle_errors(loggering=logging, nomessagesNormal=False)
     def add_new_file(self):
         """
         Add a new file to the file menu.
@@ -246,7 +247,7 @@ class SuperNano:
         self.new_file_textbox.clear()
         self.undo_stack.clear()  # Clear undo stack when a new file is added
 
-    @complex_handle_errors()
+    @complex_handle_errors(loggering=logging, nomessagesNormal=False)
     def open_file_dir(self, filename=None):
         """
         Open a file or directory.
@@ -289,7 +290,7 @@ class SuperNano:
                     "The selected file could not be opened - not a text file",
                 )
 
-    @complex_handle_errors()
+    @complex_handle_errors(loggering=logging, nomessagesNormal=False)
     def save_opened_file(self):
         """
         Save the currently opened file.
@@ -318,7 +319,7 @@ class SuperNano:
                 "No File Opened", "Please open a file before saving it."
             )
 
-    @complex_handle_errors()
+    @complex_handle_errors(loggering=logging, nomessagesNormal=False)
     def delete_selected_file(self):
         """
         Delete the currently selected file.
@@ -336,7 +337,7 @@ class SuperNano:
                 "No File Opened", "Please open a file before deleting it."
             )
 
-    @complex_handle_errors()
+    @complex_handle_errors(loggering=logging, nomessagesNormal=False)
     def confirm_delete(self, confirmed: bool):
         """
         Confirm the deletion of the file based on user response.
@@ -362,7 +363,7 @@ class SuperNano:
                 "Delete Cancelled", "File deletion was cancelled."
             )
 
-    @complex_handle_errors()
+    @complex_handle_errors(loggering=logging, nomessagesNormal=False)
     def search_files(self):
         """
         Search for files in the directory that match the search query.
@@ -390,17 +391,23 @@ class SuperNano:
             self.file_menu.add_item_list(matched_files)
 
 
-@complex_handle_errors()
+@complex_handle_errors(loggering=logging, nomessagesNormal=False)
 def parse_args():
     """
-    Parse command line arguments.
+    Fungsi parse_args bertugas untuk mendapatkan\menangkap argument konsol (console title) yang diberikan oleh user.\n
     """
     parser = argparse.ArgumentParser(
         description="An extension on nano for editing directories in CLI."
     )
-    parser.add_argument("path", help="Target file or directory to edit.")
+    parser.add_argument(
+        "path",
+        default=os.path.split(thisfolder)[0],
+        nargs="?",
+        type=str,
+        help="Target file or directory to edit.",
+    )
     args = vars(parser.parse_args())
-    path = args.get("path", ".").strip()
+    path = args.get("path", ".").strip().replace("\\", "/")
     if os.path.exists(path):
         if validate_folder(path=path):
             pass
@@ -411,7 +418,7 @@ def parse_args():
         logging.error(f"ERROR - {path} path does not exist")
         exit()
 
-    return path
+    return resolve_relative_path_v2(path).replace("\\", "/")
 
 
 def main():
