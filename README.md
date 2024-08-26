@@ -48,6 +48,12 @@ Berikut adalah dokumentasi untuk script `SuperNano`, sebuah text editor berbasis
 5. **Copy-Paste**: Gunakan `Ctrl+C` untuk copy dan `Ctrl+V` untuk paste.
 6. **Keluar dari Aplikasi**: Tekan `Ctrl+Q` atau `ESC` untuk keluar dari aplikasi.
 
+## Cara Penggunaan
+Jalankan script ini melalui command line dengan memberikan argumen berupa path file atau direktori yang ingin diedit. Contoh:
+```
+python supernano.py /path/to/directory_or_file
+```
+
 ## Lisensi
 Aplikasi ini dibuat oleh Ramsyan Tungga Kiansantang dan dilisensikan di bawah [Lisensi GPL v3](https://www.gnu.org/licenses/gpl-3.0.html). Untuk kontribusi atau pelaporan bug, silakan kunjungi repositori Github yang telah disediakan.
 
