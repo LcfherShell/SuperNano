@@ -738,7 +738,7 @@ class SuperNano:
         "Mencari file atau folder berdasarkan input pencarian, membuka file jika ditemukan, atau memperbarui daftar file jika folder ditemukan."
         search_query = self.search_edit.get_edit_text().replace("\\", "/").strip()
         if search_query:
-            if ":" in search_query and not search_query.startswith("@[files]"):
+            if ":" in search_query and not search_query.startswith("@[select]"):
                 if os.path.isfile(search_query):
                     dirname, file_name = os.path.dirname(
                         search_query
@@ -810,10 +810,10 @@ class SuperNano:
                         )
                     else:
                         if (
-                            search_query.startswith("@[files]")
+                            search_query.startswith("@[select]")
                             and search_query.find("[@rename]") > -1
                         ):
-                            x = search_query.replace("@[files]", "", 1).split(
+                            x = search_query.replace("@[select]", "", 1).split(
                                 "[@rename]", 1
                             )
                             if x.__len__() == 2:
