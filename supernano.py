@@ -482,7 +482,7 @@ class SuperNano:
         else:
             if validate_folder(os.path.dirname(file_path)):
                 try:
-                    with open(file_path, "r+", encoding="utf-8") as f:
+                    with open(file_path, "r+", encoding=sys.getfilesystemencoding()) as f:
                         content = f.read()
                 except UnicodeDecodeError:
                     with open(file_path, "r+", encoding="latin-1") as f:
@@ -501,8 +501,12 @@ class SuperNano:
         "Menyimpan perubahan yang dilakukan pada file saat ini dan mengembalikan status keberhasilan."
         if self.current_file_name:
             file_path = os.path.join(self.current_path, self.current_file_name)
-            with open(file_path, "w+", encoding="utf-8") as f:
-                f.write(self.text_editor.get_edit_text())
+            try:
+                with open(file_path, "w+", encoding=sys.getfilesystemencoding()) as f:
+                    f.write(self.text_editor.get_edit_text())
+            except:
+                with open(file_path, "w+", encoding="latin-1") as f:
+                    f.write(self.text_editor.get_edit_text())
             self.footer_text.set_text("File saved successfully!")
         return True
 
