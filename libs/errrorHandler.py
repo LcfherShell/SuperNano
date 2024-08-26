@@ -50,7 +50,7 @@ def complex_handle_errors(loggering=None, log_message: Optional[str] = None, nom
                 )
                 loggering.error(f"Function {func.__name__} failed after {execution_time:.4f} seconds with error: {e}")
                 loggering.error(error_message)
-                return ""  # Atau nilai default sesuai kebutuhan
+                return None  # Atau nilai default sesuai kebutuhan
 
 
         return wrapper
