@@ -1,0 +1,6 @@
+windows-curses==2.3.3
+py-cui==0.1.4
+pyperclip
+psutil
+logging
+httpx
