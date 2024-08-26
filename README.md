@@ -1,3 +1,7 @@
+Berikut adalah dokumentasi untuk script `SuperNano`, sebuah text editor berbasis console yang menggunakan Python 3.6 ke atas dan pustaka `urwid[curses]`.
+
+---
+
 # Dokumentasi SuperNano
 
 ## Deskripsi
