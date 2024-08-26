@@ -60,12 +60,12 @@ for handler in logging.root.handlers[:]:
 
 logging.basicConfig(
     filename=fileloogiing,
-    filemode="a",
+    filemode="w",
+    encoding=sys.getfilesystemencoding(),
     format="%(asctime)s, %(msecs)d %(name)s %(levelname)s [ %(filename)s-%(module)s-%(lineno)d ]  : %(message)s",
     datefmt="%H:%M:%S",
-    level=logging.DEBUG,
+    level=logging.ERROR,
 )
-
 
 def setTitle(title: str):
     """
