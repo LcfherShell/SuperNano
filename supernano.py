@@ -4,27 +4,29 @@ from typing import List, Tuple, Any
 from datetime import datetime
 from string import ascii_letters, punctuation
 try:
-    from .titlecommand import get_console_title, set_console_title
-    from .cmd_filter import shorten_path, validate_folder
-    from .errrorHandler import complex_handle_errors
-    from .system_manajemen import set_low_priority, SafeProcessExecutor
-    from .timeout import timeout_v2
-    from .filemanager import StreamFile
+    from libs.titlecommand import get_console_title, set_console_title
+    from libs.cmd_filter import shorten_path, validate_folder
+    from libs.errrorHandler import complex_handle_errors
+    from libs.system_manajemen import set_low_priority, SafeProcessExecutor
+    from libs.filemanager import StreamFile
+    from libs.timeout import timeout_v2
+    
 except:
     try:
+        from .titlecommand import get_console_title, set_console_title
+        from .cmd_filter import shorten_path, validate_folder
+        from .errrorHandler import complex_handle_errors
+        from .system_manajemen import set_low_priority, SafeProcessExecutor
+        from .timeout import timeout_v2
+        from .filemanager import StreamFile
+    except:
         from titlecommand import get_console_title, set_console_title
         from cmd_filter import shorten_path, validate_folder
         from errrorHandler import complex_handle_errors
         from system_manajemen import set_low_priority, SafeProcessExecutor
         from timeout import timeout_v2
         from filemanager import StreamFile
-    except:
-        from libs.titlecommand import get_console_title, set_console_title
-        from libs.cmd_filter import shorten_path, validate_folder
-        from libs.errrorHandler import complex_handle_errors
-        from libs.system_manajemen import set_low_priority, SafeProcessExecutor
-        from libs.filemanager import StreamFile
-        from libs.timeout import timeout_v2
+        
 
 set_low_priority(os.getpid())
 #########mendapatkan process terbaik tanpa membebani ram dan cpu
