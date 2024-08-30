@@ -15,6 +15,7 @@ try:
         ModuleInspector,
         create_file_or_folder,
         resolve_relative_path_v2,
+        resolve_relative_path,
         all_system_paths,
     )
 except:
@@ -30,6 +31,7 @@ except:
             ModuleInspector,
             create_file_or_folder,
             resolve_relative_path_v2,
+            resolve_relative_path,
             all_system_paths,
         )
     except:
@@ -44,6 +46,7 @@ except:
             ModuleInspector,
             create_file_or_folder,
             resolve_relative_path_v2,
+            resolve_relative_path,
             all_system_paths,
         )
 
@@ -144,66 +147,6 @@ class PlainButton(urwid.Button):
     button_right = urwid.Text("")
 
 
-class EditableButton(urwid.WidgetWrap):
-    def __init__(self, label, on_save):
-        self.label = label
-        self.on_save = on_save
-        self.button = PlainButton(label)
-        self.last_click_time = 0
-        urwid.connect_signal(self.button, "click", self.on_click)
-        self._w = self.button
-
-    def on_click(self, button):
-        current_time = time.time()
-        # Check for double click within 0.3 seconds
-        if current_time - self.last_click_time < 0.3:
-            self.edit_text(button)
-        self.last_click_time = current_time
-
-    def edit_text(self, button):
-        self.edit = urwid.Edit(multiline=False, edit_text=self.label)
-        urwid.connect_signal(self.edit, "change", self.on_change)
-        self._w = urwid.AttrMap(self.edit, None, focus_map="reversed")
-
-    def on_change(self, edit, new_text):
-        self.label = new_text
-
-    def keypress(self, size, key):
-        if isinstance(self._w.base_widget, urwid.Edit):
-            if key == "enter":
-                self.save_and_restore()
-            else:
-                return self._w.keypress(size, key)
-        else:
-            return super().keypress(size, key)
-
-    def save_and_restore(self):
-        self.on_save(self.label)
-        self.button = PlainButton(self.label)
-        urwid.connect_signal(self.button, "click", self.on_click)
-        self._w = self.button
-
-
-class ClipboardTextBox(urwid.Edit):
-    def keypress(self, size, key):
-        if key == "ctrl c":
-            self.copy_to_clipboard()
-        elif key == "ctrl v":
-            self.paste_from_clipboard()
-        else:
-            return super().keypress(size, key)
-
-    def copy_to_clipboard(self):
-        self.clipboard = self.get_edit_text()
-
-    def paste_from_clipboard(self):
-        if hasattr(self, "clipboard"):
-            cursor_pos = self.edit_pos
-            text = self.get_edit_text()
-            self.set_edit_text(text[:cursor_pos] + self.clipboard + text[cursor_pos:])
-            self.edit_pos = cursor_pos + len(self.clipboard)
-
-
 class SuperNano:
     """
     Kelas SuperNano yang sedang Anda kembangkan adalah text editor berbasis console yang menggunakan Python 3.6 ke atas dengan dukungan urwid[curses].
@@ -225,6 +168,7 @@ class SuperNano:
         self.undo_stack, self.redo_stack = [[], []]  # Stack for undo  # Stack for redo
         self.overlay_POPUP = None  # Overlay untuk popup
         self.module_package_Python = ModuleInspector()  # memuat module python
+        self.module_package_PythonC = self.module_package_Python.curents
 
         # Set title
         setTitle("Win-SuperNano v{version}".format(version=__version__))
@@ -244,7 +188,7 @@ class SuperNano:
         self.listmodules_from_package_Python = urwid.SimpleFocusListWalker(
             [
                 create_button(module)
-                for module in self.module_package_Python.get_module(sys.path)
+                for module in self.module_package_Python.get_python_module(sys.path)
             ]
         )
         # Footer text and ListBox for scrolling
@@ -523,8 +467,8 @@ class SuperNano:
             urwid.connect_signal(button, "click", self.go_up_directory)
             files.append(urwid.AttrMap(button, None, focus_map="reversed"))
 
-        for f in os.listdir(self.current_path):
-            if os.path.isdir(os.path.join(self.current_path, f)):
+        for f in os.listdir(f"{self.current_path}"):
+            if os.path.isdir(resolve_relative_path(self.current_path, f)):
                 f = f + "/"
             button = PlainButton(f)
             urwid.connect_signal(button, "click", self.open_file, f)
@@ -646,7 +590,7 @@ class SuperNano:
     @complex_handle_errors(loggering=logging, nomessagesNormal=False)
     def open_file(self, button, file_name):
         "Membuka file yang dipilih, membaca isinya, dan menampilkannya di text editor. Jika itu adalah direktori, berpindah ke direktori tersebut."
-        file_path = os.path.join(self.current_path, file_name)
+        file_path = resolve_relative_path(self.current_path, file_name)
         _c, ext = os.path.splitext(file_path)
         if os.path.isdir(file_path):
             if validate_folder(file_path):
@@ -671,12 +615,26 @@ class SuperNano:
                 content = content.replace("\t", " " * 4)
                 self.undo_stack.append(content)
                 self.text_editor.set_edit_text(content)
-                self.current_file_name = file_name  # Track the current file name
+                if self.current_file_name != file_path:
+                    modulefile = self.module_package_Python.get_moduleV2(file_path)
+                    if modulefile:
+                        if modulefile != self.module_package_Python.curents:
+                            self.listmodules_from_package_Python[
+                                    :
+                                ] = self.create_modules_menus(modulefile)
+                            self.module_package_Python.curents = modulefile
 
+                    else:
+                        self.listmodules_from_package_Python[
+                                    :
+                                ] =  self.create_modules_menus(self.module_package_PythonC)
+                    
+                self.current_file_name = file_name  # Track the current file name
                 # if str(ext).lower() in ( ".pyx", ".pyz", ".py"):
                 #    self.listmodules_from_package_Python[:] = self.modules_menus(self.current_path)
-
-                self.main_layout.body.contents[1][0].set_title(file_name)
+                if self.module_package_Python.languages:
+                    self.Inspect_modules_from_package_Python.body.set_title(self.module_package_Python.languages["languages"]+" Modules")
+                self.main_layout.body.contents[2][0].set_title(file_name)
 
             else:
                 self.status_msg_footer_text.set_text("File access denied!")
