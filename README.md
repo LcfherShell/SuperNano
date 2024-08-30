@@ -1,4 +1,4 @@
-Berikut adalah dokumentasi untuk script `SuperNano`, sebuah text editor berbasis console yang menggunakan Python 3.6 ke atas dan pustaka `urwid[curses]`.
+Berikut adalah dokumentasi untuk script `SuperNano`, sebuah text editor berbasis console yang kuat khusus platform Windows 8, 10, 11.
 
 ---
 
