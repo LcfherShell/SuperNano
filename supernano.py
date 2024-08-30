@@ -438,14 +438,21 @@ class SuperNano:
         result = self.module_package_Python.inspect_module(module_name)
         if result:
             result_text = f"Module: {result['module']}\n\nGlobal Variables:\n"
-            result_text += "\n".join(result["global_variables"]) + "\n\nClasses:\n"
-            for cls in result["classes"]:
-                result_text += f"Class: {cls['name']}\n"
-                result_text += "  Variables:\n"
-                result_text += "  " + "\n > ".join(cls["variables"]) + "\n\n"
-                result_text += "  Functions:\n"
-                for func in cls["functions"]:
-                    result_text += f" > {func['name']}{func['params']}\n\n"
+            if result["classes"]:
+                result_text += "\n".join(result["variables"]) + "\n\nClasse:\n"
+                for cls in result["classes"]:
+                    if cls['name']:
+                        result_text += f"Class: {cls['name']}\n"
+                        result_text += "  Variables:\n"
+                        result_text += "  " + "\n > ".join(cls["variables"]) + "\n\n"
+                        if cls["functions"]:
+                            result_text += "  Function:\n"
+                            for func in cls["functions"]:
+                                result_text += f" > {func['name']}{func['params']}\n\n"
+            for funcs in result["functions"]:
+                if funcs['name']:
+                    result_text += f"Function: {funcs['name']}\n"
+                    result_text += f" > {funcs['name']}{funcs['params']}\n\n"
             self.Text_Deinspect_modules_from_package_Python.set_text(result_text)
         else:
             self.Text_Deinspect_modules_from_package_Python.set_text(
