@@ -65,10 +65,13 @@ Kelas ini bertanggung jawab untuk memuat dan menginspeksi modul-modul Python, C,
 
 
 ## Syarat
-- Nodejs
 - Python V3.8^
-- Module NPM (Node) : acorn, php-parser
+- Nodejs
+- Clang [tidak wajib]
+- Composer PHP [tidak wajib]
 - Module pip (Python) : requirements.txt
+- Module NPM (Node) : acorn, php-parser
+
 
 ## Cara Penggunaan
 Jalankan script ini melalui command line dengan memberikan argumen berupa path file atau direktori yang ingin diedit. Contoh:
