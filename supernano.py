@@ -453,7 +453,7 @@ class SuperNano:
                                     result_text += f" > {func['name']}{func['params']}\n\n"
                 for funcs in result["functions"]:
                     if funcs['name']:
-                        result_text += f"Function: {funcs['name']}\n"
+                        result_text += f"\nFunction: {funcs['name']}\n"
                         result_text += f" > {funcs['name']}{funcs['params']}\n\n"
             self.Text_Deinspect_modules_from_package_Python.set_text(result_text)
         else:
