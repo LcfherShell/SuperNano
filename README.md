@@ -1,3 +1,5 @@
+<img src="https://repository-images.githubusercontent.com/847198464/b36c0223-b3fa-4846-8f82-21e1b48d7021" alt="Banner" style="max-width: 100%; height: auto;" />
+
 Berikut adalah dokumentasi untuk script `SuperNano`, sebuah editor berbasis konsol yang ditulis menggunakan Python dengan modul `py_cui`. Editor ini menyediakan antarmuka untuk mengelola file dan direktori serta menyediakan fitur pengeditan teks dasar. 
 
 ---
