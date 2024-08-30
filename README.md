@@ -83,7 +83,7 @@ python supernano.py /path/to/directory_or_file
 Aplikasi ini dibuat oleh Ramsyan Tungga Kiansantang dan dilisensikan di bawah [Lisensi GPL v3](https://www.gnu.org/licenses/gpl-3.0.html). Untuk kontribusi atau pelaporan bug, silakan kunjungi repositori Github yang telah disediakan.
 
 ## Versi
-- **Versi**: V2.1.0
+- **Versi**: V2.2.1
 - **Tanggal Rilis**: 21 Agustus 2024
 
 ---
