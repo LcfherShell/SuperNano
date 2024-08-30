@@ -84,7 +84,7 @@ Aplikasi ini dibuat oleh Ramsyan Tungga Kiansantang dan dilisensikan di bawah [L
 
 ## Versi
 - **Versi**: V2.2.1
-- **Tanggal Rilis**: 21 Agustus 2024
+- **Tanggal Rilis**: 30 Agustus 2024
 
 ---
 
