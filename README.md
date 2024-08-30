@@ -1,4 +1,5 @@
 [![LcfherShell](https://github.com/LcfherShell/local_svg/blob/main/lcfhershell.svg)](https://github.com/LcfherShell)
+
 <img src="https://repository-images.githubusercontent.com/847198464/b36c0223-b3fa-4846-8f82-21e1b48d7021" alt="SuperNano" style="max-width: 100%; height: auto;" />
 
 Berikut adalah dokumentasi untuk script `SuperNano`, sebuah text editor berbasis console yang kuat khusus platform Windows 8, 10, 11.
