@@ -10,6 +10,7 @@ try:
     from libs.timeout import timeout_v2, timeout_v1
     from libs.filemanager import (
             StreamFile,
+            validate_file,
             create_file_or_folder,
             resolve_relative_path_v2,
             all_system_paths,
@@ -23,6 +24,7 @@ except:
         from .timeout import timeout_v2, timeout_v1
         from .filemanager import (
             StreamFile,
+            validate_file,
             create_file_or_folder,
             resolve_relative_path_v2,
             all_system_paths,
@@ -35,6 +37,7 @@ except:
         from timeout import timeout_v2, timeout_v1
         from filemanager import (
             StreamFile,
+            validate_file,
             create_file_or_folder,
             resolve_relative_path_v2,
             all_system_paths,
@@ -483,7 +486,9 @@ class SuperNano:
             else:
                 self.footer_text.set_text("Folder access denied!")
         else:
-            if validate_folder(os.path.dirname(file_path)):
+            if validate_folder(os.path.dirname(file_path)) and validate_file(
+                file_path, os.path.getsize(file_path) or 20, 6
+            ):
                 try:
                     with open(file_path, "r+", encoding=sys.getfilesystemencoding()) as f:
                         content = f.read()
