@@ -766,8 +766,7 @@ def validate_file(file_path, max_size_mb=100, max_read_time=2):
         start_time = time.time()
 
         # Baca file
-        with open(file_path, "rb+",  
-                  encoding=sys.getfilesystemencoding()) as f:
+        with open(file_path, "rb") as f:
             # Baca bagian pertama file untuk memeriksa apakah file biner
             first_bytes = f.read(1024)
             if b"\x00" in first_bytes:
