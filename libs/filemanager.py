@@ -328,6 +328,37 @@ def is_binary_file(file_path):
     except Exception as e:
         return False
 
+def validate_file(file_path, max_size_mb=100, max_read_time=2):
+    try:
+        # Periksa ukuran file
+        file_size = os.path.getsize(file_path)
+        if file_size > max_size_mb * 1024 * 1024:
+            return False
+
+        # Mulai waktu pembacaan
+        start_time = time.time()
+
+        # Baca file
+        with open(file_path, "rb+",  
+                  encoding=sys.getfilesystemencoding()) as f:
+            # Baca bagian pertama file untuk memeriksa apakah file biner
+            first_bytes = f.read(1024)
+            if b"\x00" in first_bytes:
+                return False
+
+            # Lanjutkan membaca file
+            while f.read(1024):
+                # Periksa waktu yang telah digunakan untuk membaca
+                elapsed_time = time.time() - start_time
+                if elapsed_time > max_read_time:
+                    return False
+
+        # Jika semua pemeriksaan lolos, file valid
+        return True
+
+    except Exception as e:
+        return False
+
 
 def check_class_in_package(package_name, class_name):
     try:
