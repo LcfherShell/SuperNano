@@ -328,34 +328,58 @@ def is_binary_file(file_path):
     except Exception as e:
         return False
 
-def validate_file(file_path, max_size_mb=100, max_read_time=2):
+def is_binary_file(file_path):
+    """
+    Menentukan apakah file adalah file biner atau bukan.
+
+    Args:
+        file_path (str): Path ke file yang akan diperiksa.
+
+    Returns:
+        bool: True jika file adalah file biner, False jika bukan.
+    """
     try:
-        # Periksa ukuran file
-        file_size = os.path.getsize(file_path)
-        if file_size > max_size_mb * 1024 * 1024:
-            return False
+        with open(file_path, "rb+") as file:
+            chunk = file.read(1024)  # Membaca bagian pertama file (1KB)
+            # Cek apakah file memiliki karakter yang tidak biasa untuk teks
+            if b"\0" in chunk:  # Null byte adalah indikator umum dari file biner
+                return True
+            # Cek apakah file sebagian besar berisi karakter teks (misalnya ASCII)
+            text_chars = b"".join([bytes((i,)) for i in range(32, 127)]) + b"\n\r\t\b"
+            non_text_chars = chunk.translate(None, text_chars)
+            if (
+                len(non_text_chars) / len(chunk) > 0.30
+            ):  # Jika lebih dari 30% karakter non-teks
+                return True
+        return False
+    except Exception as e:
+        return False
 
-        # Mulai waktu pembacaan
-        start_time = time.time()
 
-        # Baca file
-        with open(file_path, "rb+",  
-                  encoding=sys.getfilesystemencoding()) as f:
-            # Baca bagian pertama file untuk memeriksa apakah file biner
-            first_bytes = f.read(1024)
-            if b"\x00" in first_bytes:
-                return False
+def is_binary_file(file_path):
+    """
+    Menentukan apakah file adalah file biner atau bukan.
 
-            # Lanjutkan membaca file
-            while f.read(1024):
-                # Periksa waktu yang telah digunakan untuk membaca
-                elapsed_time = time.time() - start_time
-                if elapsed_time > max_read_time:
-                    return False
+    Args:
+        file_path (str): Path ke file yang akan diperiksa.
 
-        # Jika semua pemeriksaan lolos, file valid
-        return True
-
+    Returns:
+        bool: True jika file adalah file biner, False jika bukan.
+    """
+    try:
+        with open(file_path, "rb+") as file:
+            chunk = file.read(1024)  # Membaca bagian pertama file (1KB)
+            # Cek apakah file memiliki karakter yang tidak biasa untuk teks
+            if b"\0" in chunk:  # Null byte adalah indikator umum dari file biner
+                return True
+            # Cek apakah file sebagian besar berisi karakter teks (misalnya ASCII)
+            text_chars = b"".join([bytes((i,)) for i in range(32, 127)]) + b"\n\r\t\b"
+            non_text_chars = chunk.translate(None, text_chars)
+            if (
+                len(non_text_chars) / len(chunk) > 0.30
+            ):  # Jika lebih dari 30% karakter non-teks
+                return True
+        return False
     except Exception as e:
         return False
 
