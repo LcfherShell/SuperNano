@@ -13,6 +13,7 @@ try:
     from libs.filemanager import (
         StreamFile,
         ModuleInspector,
+        validate_file,
         create_file_or_folder,
         resolve_relative_path_v2,
         resolve_relative_path,
@@ -29,6 +30,7 @@ except:
         from .filemanager import (
             StreamFile,
             ModuleInspector,
+            validate_file,
             create_file_or_folder,
             resolve_relative_path_v2,
             resolve_relative_path,
@@ -44,6 +46,7 @@ except:
         from filemanager import (
             StreamFile,
             ModuleInspector,
+            validate_file,
             create_file_or_folder,
             resolve_relative_path_v2,
             resolve_relative_path,
@@ -145,6 +148,52 @@ class PlainButton(urwid.Button):
 
     button_left = urwid.Text("")
     button_right = urwid.Text("")
+
+
+class NumberedEdit(urwid.WidgetWrap):
+    def __init__(self, edit_text="", multiline=True):
+        self.edit = urwid.Edit(edit_text, multiline=multiline)
+        self.line_numbers = urwid.Text("")
+        self.update_line_numbers()
+
+        columns = urwid.Columns([("fixed", 4, self.line_numbers), self.edit])
+        super().__init__(urwid.AttrMap(columns, None, focus_map="reversed"))
+
+        # Connect the 'change' signal from the internal Edit widget
+        urwid.connect_signal(self.edit, "change", self._on_change)
+
+    def update_line_numbers(self):
+        text = self.edit.get_edit_text()
+        lines = text.splitlines()
+        line_numbers = "\n".join([f"{i+1:>3}" for i in range(len(lines))])
+        self.line_numbers.set_text(line_numbers)
+
+    def keypress(self, size, key):
+        key = super().keypress(size, key)
+        self.update_line_numbers()
+        return key
+
+    def mouse_event(self, size, event, button, col, row, focus):
+        handled = super().mouse_event(size, event, button, col, row, focus)
+        if handled:
+            self.update_line_numbers()
+        return handled
+
+    def _on_change(self, edit, new_text):
+        self.update_line_numbers()
+        urwid.emit_signal(self, "change", self, new_text)
+
+    def set_edit_text(self, text):
+        """Set the text of the edit widget and update line numbers."""
+        self.edit.set_edit_text(text)
+        self.update_line_numbers()
+
+    def get_edit_text(self):
+        """Get the text from the edit widget."""
+        return self.edit.get_edit_text()
+
+
+urwid.register_signal(NumberedEdit, ["change"])
 
 
 class SuperNano:
@@ -268,11 +317,11 @@ class SuperNano:
         # Define widgets
         self.file_list = urwid.SimpleFocusListWalker(self.get_file_list())
         self.file_list_box = urwid.ListBox(self.file_list)
-        self.text_editor = urwid.Edit(multiline=True)
+        self.text_editor = NumberedEdit(multiline=True)
         self.current_focus = 0  # 0 for textbox1, 1 for textbox2
         # Wrap text_editor with BoxAdapter for scrollable content
         self.text_editor_scrollable = urwid.LineBox(
-            urwid.Filler(self.text_editor, valign="top")
+            urwid.Filler(self.text_editor, valign="top"), title="TextBox"
         )
 
         # Define menu widgets
@@ -353,9 +402,7 @@ class SuperNano:
                     (
                         "weight",
                         3,
-                        urwid.LineBox(
-                            urwid.Pile([self.text_editor_scrollable]), title="TextBox"
-                        ),
+                        self.text_editor_scrollable,
                     ),
                 ]
             ),
@@ -389,19 +436,25 @@ class SuperNano:
                     if result["classes"]:
                         result_text += "\n\nClass:\n"
                         for cls in result["classes"]:
-                            if cls['name']:
+                            if cls["name"]:
                                 result_text += f"Class: {cls['name']}\n"
                                 result_text += "  Variables:\n"
-                                result_text += "  " + "\n > ".join(cls["variables"]) + "\n\n"
+                                result_text += (
+                                    "  " + "\n > ".join(cls["variables"]) + "\n\n"
+                                )
                                 if cls["functions"]:
                                     result_text += "  Function:\n"
                                     for func in cls["functions"]:
-                                        result_text += f" > {func['name']}{func['params']}\n\n"
+                                        result_text += (
+                                            f" > {func['name']}{func['params']}\n\n"
+                                        )
                     for funcs in result["functions"]:
-                        if funcs['name']:
+                        if funcs["name"]:
                             result_text += f"\nFunction: {funcs['name']}\n"
                             result_text += f" > {funcs['name']}{funcs['params']}\n\n"
-                    self.Text_Deinspect_modules_from_package_Python.set_text(result_text)
+                    self.Text_Deinspect_modules_from_package_Python.set_text(
+                        result_text
+                    )
         else:
             self.Text_Deinspect_modules_from_package_Python.set_text(
                 "Error inspecting module."
@@ -526,12 +579,13 @@ class SuperNano:
             self.switch_to_secondary_layout()
         elif key in ("f1", "ctrl e", "ctrl E"):
             self.current_focus = 1 if self.current_focus == 0 else 0
+            self.status_msg_footer_text.set_text(f"focus {self.current_focus}")
 
     @complex_handle_errors(loggering=logging, nomessagesNormal=False)
     def get_current_edit(self):
         "Mengembalikan widget edit yang sedang difokuskan (text editor atau search edit)."
         if self.current_focus == 0:
-            return self.text_editor.base_widget
+            return self.text_editor.edit.base_widget
         elif self.current_focus == 1:
             return self.search_edit.base_widget
         return None
@@ -605,7 +659,9 @@ class SuperNano:
             else:
                 self.status_msg_footer_text.set_text("Folder access denied!")
         else:
-            if validate_folder(os.path.dirname(file_path)):
+            if validate_folder(os.path.dirname(file_path)) and validate_file(
+                file_path, os.path.getsize(file_path) or 20, 6
+            ):
                 try:
                     with open(
                         file_path, "r+", encoding=sys.getfilesystemencoding()
@@ -622,20 +678,22 @@ class SuperNano:
                     if modulefile:
                         if modulefile != self.module_package_Python.curents:
                             self.listmodules_from_package_Python[
-                                    :
-                                ] = self.create_modules_menus(modulefile)
+                                :
+                            ] = self.create_modules_menus(modulefile)
                             self.module_package_Python.curents = modulefile
 
                     else:
                         self.listmodules_from_package_Python[
-                                    :
-                                ] =  self.create_modules_menus(self.module_package_PythonC)
-                    
+                            :
+                        ] = self.create_modules_menus(self.module_package_PythonC)
+
                 self.current_file_name = file_name  # Track the current file name
                 # if str(ext).lower() in ( ".pyx", ".pyz", ".py"):
                 #    self.listmodules_from_package_Python[:] = self.modules_menus(self.current_path)
                 if self.module_package_Python.languages:
-                    self.Inspect_modules_from_package_Python.body.set_title(self.module_package_Python.languages["languages"]+" Modules")
+                    self.Inspect_modules_from_package_Python.body.set_title(
+                        self.module_package_Python.languages["languages"] + " Modules"
+                    )
                 self.main_layout.body.contents[2][0].set_title(file_name)
 
             else:
@@ -651,13 +709,16 @@ class SuperNano:
         "Menyimpan perubahan yang dilakukan pada file saat ini dan mengembalikan status keberhasilan."
         if self.current_file_name:
             file_path = os.path.join(self.current_path, self.current_file_name)
-            try:
-                with open(file_path, "w+", encoding=sys.getfilesystemencoding()) as f:
-                    f.write(self.text_editor.get_edit_text())
-            except:
-                with open(file_path, "w+", encoding="latin-1") as f:
-                    f.write(self.text_editor.get_edit_text())
-            self.status_msg_footer_text.set_text("File saved successfully!")
+            if os.path.isfile(file_path):
+                try:
+                    with open(
+                        file_path, "w+", encoding=sys.getfilesystemencoding()
+                    ) as f:
+                        f.write(self.text_editor.get_edit_text())
+                except:
+                    with open(file_path, "w+", encoding="latin-1") as f:
+                        f.write(self.text_editor.get_edit_text())
+                self.status_msg_footer_text.set_text("File saved successfully!")
         return True
 
     @complex_handle_errors(loggering=logging, nomessagesNormal=False)
