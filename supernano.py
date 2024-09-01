@@ -97,7 +97,7 @@ def setTitle(title: str):
     set_console_title(output)
 
 
-@complex_handle_errors(loggering=logging)
+@complex_handle_errors(loggering=logging, nomessagesNormal=False)
 def parse_args():
     """
     Fungsi parse_args bertugas untuk mendapatkan\menangkap argument konsol (console title) yang diberikan oleh user.\n
@@ -112,8 +112,8 @@ def parse_args():
         type=str,
         help="Target file or directory to edit.",
     )
-    args = vars(parser.parse_args())
-    path = args.get("path", ".").strip().replace("\\", "/")
+    args = parser.parse_args()
+    path = resolve_relative_path(args.path, "")
     if os.path.exists(path):
         if validate_folder(path=path):
             pass
