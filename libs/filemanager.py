@@ -238,7 +238,7 @@ class ModuleInspector:
             global_vars = self.get_global_variables(module_name)
             result = {
                 "module": module_name,
-                "global_variables": global_vars,
+                "variables": global_vars,
                 "classes": [],
             }
 
