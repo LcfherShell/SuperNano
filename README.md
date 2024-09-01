@@ -73,7 +73,7 @@ python supernano.py /path/to/directory_or_file
 or [main](https://github.com/LcfherShell/SuperNano/tree/main)
 
 ## License
-This application was created by Ramsyan Tungga Kiansantang and is licensed under the [GPL v3 License](https://github.com/LcfherShell/SuperNano/blob/V2.1.0/GPL-3.0.txt. For contributions or bug reporting, please visit the provided Github repository.
+This application was created by Ramsyan Tungga Kiansantang and is licensed under the [GPL v3 License](https://github.com/LcfherShell/SuperNano/blob/V2.1.0/GPL-3.0.txt). For contributions or bug reporting, please visit the provided Github repository.
 
 ## Version
 - **Version**: V2.1.0
