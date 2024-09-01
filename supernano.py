@@ -607,7 +607,10 @@ class SuperNano:
             lambda loop, user_data: self.system_usage(),
         )
 
-        urwid.TrustedLoop(self.loop).set_widget(self.main_layout)
+        try:
+            urwid.TrustedLoop(self.loop).set_widget(self.main_layout)
+        except:
+            self.loop.widget = self.main_layout
 
     @complex_handle_errors(loggering=logging, nomessagesNormal=False)
     def create_modules_menus(self, listmodulename: list):
