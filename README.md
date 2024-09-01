@@ -56,14 +56,14 @@ This class is responsible for loading and inspecting Python modules. Retrievable
 - **`get_module(self, paths)`**: Returns a list of modules found in the given path.
 - **`inspect_module(self, module_name)`**: Inspects the module with the given name and returns the details of the module.
 
-## Penggunaan
-1. **Menjalankan Aplikasi**: Jalankan script `SuperNano` dengan Python 3.6 ke atas di terminal Anda.
-2. **Navigasi File**: Gunakan panah atas dan bawah untuk memilih file di direktori. Tekan Enter untuk membuka file.
-3. **Edit Teks**: Setelah file terbuka, teks dapat diedit langsung di editor. Gunakan `Ctrl+S` untuk menyimpan perubahan.
-4. **Undo-Redo**: Gunakan `Ctrl+Z` untuk undo dan `Ctrl+Y` untuk redo.
-5. **Copy-Paste**: Gunakan `Ctrl+C` untuk copy dan `Ctrl+V` untuk paste.
-6. **Inspeksi Modul**: Pilih modul dari daftar yang tersedia di UI untuk menampilkan informasi tentang modul tersebut.
-7. **Keluar dari Aplikasi**: Tekan `Ctrl+Q` atau `ESC` untuk keluar dari aplikasi.
+## Usage
+1. **Running the Application**: Run the `SuperNano` script with Python 3.6 and above in your terminal.
+2. **Navigate Files**: Use the up and down arrows to select files in the directory. Press Enter to open the file.
+3. **Edit Text**: Once the file is open, the text can be edited directly in the editor. Use `Ctrl+S` to save changes.
+4. **Undo-Redo**: Use `Ctrl+Z` to undo and `Ctrl+Y` to redo.
+5. **Copy-Paste**: Use `Ctrl+C` to copy and `Ctrl+V` to paste.
+6. **Inspect Module**: Select a module from the list available in the UI to display information about the module.
+7. **Exit Application**: Press `Ctrl+Q` or `ESC` to exit the application.
 
 ## How to run script
 Run this script through the command line by giving an argument in the form of the path of the file or directory you want to edit. Example:
