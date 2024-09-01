@@ -703,7 +703,7 @@ class SuperNano:
                 # if str(ext).lower() in ( ".pyx", ".pyz", ".py"):
                 #    self.listmodules_from_package_Python[:] = self.modules_menus(self.current_path)
 
-                self.main_layout.body.contents[1][0].set_title(file_name)
+                self.main_layout.body.contents[2][0].set_title(file_name)
 
             else:
                 self.status_msg_footer_text.set_text("File access denied!")
@@ -812,7 +812,7 @@ class SuperNano:
                     self.undo_stack.append(content)
                     self.text_editor.set_edit_text(content)
                     self.current_file_name = file_name  # Track the current file name
-                    self.main_layout.body.contents[1][0].set_title(file_name)
+                    self.main_layout.body.contents[2][0].set_title(file_name)
 
                 elif os.path.isdir(search_query):
                     dirname = search_query
