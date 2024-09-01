@@ -670,7 +670,3 @@ if __name__ == "__main__":
         print(r)
     rd.eraseFile() #membersihkan loggging
     rd.close()
-else:
-    if '__file__' in globals():
-        print("This script should not be imported. Run it directly.")
-        sys.exit()
