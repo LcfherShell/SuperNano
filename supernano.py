@@ -87,7 +87,7 @@ set_low_priority(os.getpid())
 
 thisfolder, _x = all_system_paths
 
-__version__ = "2.1.0"
+__version__ = "2.2.1"
 
 
 fileloogiing = os.path.join(thisfolder, "cache", "file_browser.log").replace("\\", "/")
