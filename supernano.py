@@ -70,6 +70,7 @@ logging.basicConfig(
     level=logging.ERROR,
 )
 
+
 def setTitle(title: str):
     """
     Fungsi setTitle bertugas untuk mengatur judul konsol (console title) berdasarkan parameter title yang diberikan.\n
@@ -97,7 +98,7 @@ def setTitle(title: str):
     set_console_title(output)
 
 
-@complex_handle_errors(loggering=logging, nomessagesNormal=False)
+@complex_handle_errors(loggering=logging)
 def parse_args():
     """
     Fungsi parse_args bertugas untuk mendapatkan\menangkap argument konsol (console title) yang diberikan oleh user.\n
@@ -646,7 +647,7 @@ class SuperNano:
         "Memulai loop utama urwid untuk menjalankan aplikasi."
         self.loop.run()
 
-
+@complex_handle_errors(loggering=logging)
 def main(path: str):
     app = SuperNano(start_path=path)
     app.run()
