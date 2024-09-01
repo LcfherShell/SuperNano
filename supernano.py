@@ -116,15 +116,9 @@ def parse_args():
     parser = argparse.ArgumentParser(
         description="An extension on nano for editing directories in CLI."
     )
-    parser.add_argument(
-        "path",
-        default=os.path.split(thisfolder)[0],
-        nargs="?",
-        type=str,
-        help="Target file or directory to edit.",
-    )
-    args = parser.parse_args()
-    path = resolve_relative_path(args.path, "") or "."
+    parser.add_argument("path", help="Target file or directory to edit.")
+    args = vars(parser.parse_args())
+    path = args.get("path", ".").strip().replace("\\", "/")
     if os.path.exists(path):
         if validate_folder(path=path):
             pass
