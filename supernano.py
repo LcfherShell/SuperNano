@@ -301,7 +301,10 @@ class FileBrowserApp:
             ),
             footer=urwid.Pile([self.footer_text, self.status_text]),
         )
-        urwid.TrustedLoop(self.loop).set_widget(self.main_layout)
+        try:
+            urwid.TrustedLoop(self.loop).set_widget(self.main_layout)
+        except:
+            self.loop.widget = self.main_layout
         self.system_alarm = self.loop.set_alarm_in(
             timeout_v2() + 1,
             lambda loop, user_data: self.system_usage(),
