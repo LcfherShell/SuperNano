@@ -127,7 +127,7 @@ def parse_args():
         help="Target file or directory to edit.",
     )
     args = parser.parse_args()
-    path = resolve_relative_path(args.path, "")
+    path = resolve_relative_path(args.path, "") or "."
     if os.path.exists(path):
         if validate_folder(path=path):
             pass
