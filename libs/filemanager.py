@@ -204,6 +204,17 @@ class ModuleInspector:
                 details["variables"].append(name)
 
         return details
+        
+    def get_function_detail(self, module):
+        details = []
+        try:
+            for name, obj in inspect.getmembers(importlib.import_module(module)):
+                if inspect.isfunction(obj):
+                    func_details = {"name": name, "params": str(inspect.signature(obj))}
+                    details.append(func_details)
+        except:
+            pass
+        return details
 
     def get_global_variables(self, module):
         try:
@@ -240,6 +251,7 @@ class ModuleInspector:
                 "module": module_name,
                 "variables": global_vars,
                 "classes": [],
+                "functions": self.get_function_detail(module_name),
             }
 
             for cls in classes:
