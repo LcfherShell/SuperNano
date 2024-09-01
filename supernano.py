@@ -934,9 +934,6 @@ def main(path: str):
     app = SuperNano(start_path=path)
     app.run()
 
-if '__file__' in globals():
-    print("This script should not be imported. Run it directly.")
-    sys.exit()
     
 if __name__ == "__main__":
     set_low_priority(os.getpid())
@@ -959,3 +956,7 @@ if __name__ == "__main__":
         print(r)
     rd.eraseFile()  # membersihkan loggging
     rd.close()
+else:
+    if '__file__' in globals():
+        print("This script should not be imported. Run it directly.")
+        sys.exit()
