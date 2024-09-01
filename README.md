@@ -47,7 +47,7 @@ Here is the documentation for the `SuperNano` script, a powerful console-based t
 - **`copy_text_to_clipboard(self)`**: Copies the text from the current edit widget to the clipboard.
 - **`paste_text_from_clipboard(self)`**: Paste text from the clipboard into the current edit widget.
 
-### 2. `ModuleInspector`
+### `ModuleInspector`
 This class is responsible for loading and inspecting Python, C, NodeJS, and PHP modules. Retrievable information includes global variables, classes, and functions in the module.
 
 #### Attributes:
