@@ -1,426 +1,980 @@
-import os, sys, time, shutil, psutil, inspect, importlib, pkg_resources, pkgutil, json, logging, threading
+import urwid
+import pyperclip
+import os, sys, shutil, logging, time, threading, argparse
+from datetime import datetime
 
 try:
-    from .helperegex import (
-        searchmissing,
-        searching,
-        fullmacth,
-        rremovelist,
-        clean_string,
-        rreplace,
-        cleanstring,
+    from libs.helperegex import findpositions
+    from libs.titlecommand import get_console_title, set_console_title
+    from libs.cmd_filter import shorten_path, validate_folder
+    from libs.errrorHandler import complex_handle_errors
+    from libs.system_manajemen import set_low_priority, SafeProcessExecutor
+    from libs.timeout import timeout_v2, timeout_v1
+    from libs.filemanager import (
+        StreamFile,
+        validate_file,
+        ModuleInspector,
+        create_file_or_folder,
+        resolve_relative_path,
+        resolve_relative_path_v2,
+        all_system_paths,
     )
-    from .cmd_filter import filter_json, safe_load_json
-    from .system_manajemen import set_low_priority, SafeProcessExecutor
-    from .timeout import timeout_v1, timeout_v2
-    from .https import Fetch
 except:
     try:
-        from helperegex import (
-            searchmissing,
-            searching,
-            fullmacth,
-            rremovelist,
-            clean_string,
-            rreplace,
-            cleanstring,
+        from .helperegex import findpositions
+        from .titlecommand import get_console_title, set_console_title
+        from .cmd_filter import shorten_path, validate_folder
+        from .errrorHandler import complex_handle_errors
+        from .system_manajemen import set_low_priority, SafeProcessExecutor
+        from .timeout import timeout_v2, timeout_v1
+        from .filemanager import (
+            StreamFile,
+            validate_file,
+            ModuleInspector,
+            create_file_or_folder,
+            resolve_relative_path,
+            resolve_relative_path_v2,
+            all_system_paths,
         )
-        from cmd_filter import filter_json, safe_load_json
-        from system_manajemen import set_low_priority, SafeProcessExecutor
-        from timeout import timeout_v1, timeout_v2
-        from https import Fetch
     except:
-        from libs.helperegex import (
-            searchmissing,
-            searching,
-            fullmacth,
-            rremovelist,
-            clean_string,
-            rreplace,
-            cleanstring,
+        from helperegex import findpositions
+        from titlecommand import get_console_title, set_console_title
+        from cmd_filter import shorten_path, validate_folder
+        from errrorHandler import complex_handle_errors
+        from system_manajemen import set_low_priority, SafeProcessExecutor
+        from timeout import timeout_v2, timeout_v1
+        from filemanager import (
+            StreamFile,
+            validate_file,
+            ModuleInspector,
+            create_file_or_folder,
+            resolve_relative_path,
+            resolve_relative_path_v2,
+            all_system_paths,
         )
-        from libs.cmd_filter import filter_json, safe_load_json
-        from libs.system_manajemen import set_low_priority, SafeProcessExecutor
-        from libs.timeout import timeout_v1, timeout_v2
-        from libs.https import Fetch
-
-if __name__ == "__main__":
-    set_low_priority(os.getpid())
 
 
-script_dir = os.path.dirname(os.path.realpath(__file__)).replace("\\", "/")
-all_system_paths = ["/".join(script_dir.split("/")[:-1]), script_dir]
+set_low_priority(os.getpid())
+#########mendapatkan process terbaik tanpa membebani ram dan cpu
+thisfolder, _x = all_system_paths
+__version__ = "2.1.0"
+
+fileloogiing = os.path.join(thisfolder, "cache", "file_browser.log").replace("\\", "/")
+
+if not os.path.isfile(fileloogiing):
+    open(fileloogiing, "a+")
+elif os.path.getsize(fileloogiing) > 0:
+    with open(fileloogiing, "wb+") as f:
+        f.truncate(0)
+
+for handler in logging.root.handlers[:]:
+    logging.root.removeHandler(handler)
+
+logging.basicConfig(
+    filename=fileloogiing,
+    filemode="w",
+    encoding=sys.getfilesystemencoding(),
+    format="%(asctime)s, %(msecs)d %(name)s %(levelname)s [ %(filename)s-%(module)s-%(lineno)d ]  : %(message)s",
+    datefmt="%H:%M:%S",
+    level=logging.ERROR,
+)
+logging.getLogger("urwid").disabled = True
+logger = logging.getLogger("urwid")
+for handler in logger.handlers[:]:
+    logger.removeHandler(handler)
 
 
-class StreamFile:
-    def __init__(self, file_path: str, buffer_size: int = 8192, print_delay: float = 2):
-        """
-        Inisialisasi StreamFile untuk membaca file baris demi baris dengan delay dan menulis dengan buffer.
-
-        :param file_path: Path ke file yang akan dibaca atau ditulis.
-        :param buffer_size: Ukuran buffer sebelum data ditulis ke file.
-        :param print_delay: Waktu jeda (dalam detik) antara print setiap baris.
-        """
-        self.file_path = file_path
-        self.buffer_size = buffer_size or 0
-        self.print_delay = print_delay
-        self.buffer = bytearray()
-
-    def readlines(self):
-        """
-        Membaca file dengan buffer size dan menghasilkan setiap baris satu per satu dengan delay.
-
-        :yield: Baris dari file.
-        """
-
-        with open(self.file_path, "r+") as f:
-            buffer = self.buffer
-            while True:
-                chunk = f.read(self.buffer_size)
-                if not chunk:
-                    break
-
-                buffer.extend(
-                    chunk.encode("utf-8")
-                )  # Encode chunk to bytes if necessary
-
-                while b"\n" in buffer:
-                    line, buffer = buffer.split(b"\n", 1)
-                    yield line.decode("utf-8")
-                    time.sleep(self.print_delay)
-
-            if buffer:
-                yield buffer.decode("utf-8")
-            self.buffer_size = 0
-
-    def write(self, data):
-        """
-        Menulis data ke buffer dan secara otomatis menulis ke file ketika buffer penuh.
-
-        :param data: Data yang akan ditulis ke buffer.
-        """
-        self.buffer.extend(data)
-        while len(self.buffer) >= self.buffer_size:
-            with open(self.file_path, "ab+") as f:
-                f.write(self.buffer[: self.buffer_size])
-            self.buffer = self.buffer[self.buffer_size :]
-
-    def writelines(self, lines):
-        """
-        Menulis baris-baris data ke file dengan delay antara setiap baris.
-
-        :param lines: List atau generator yang menghasilkan baris-baris data untuk ditulis.
-        """
-        for line in lines:
-            self.write(line.encode("utf-8"))
-            time.sleep(self.print_delay + timeout_v1())
-        self.close()  # Memastikan buffer ditulis dan ditutup setelah penulisan selesai
-
-    def eraseFile(self):
-        with open(self.file_path, "rb+") as f:
-            f.truncate(0)
-
-    def close(self):
-        """
-        Menulis sisa data di buffer ke file dan membersihkan buffer.
-        """
-        if self.buffer and self.buffer_size:
-            with open(self.file_path, "ab+") as f:
-                f.write(self.buffer)
-            self.buffer.clear()
-        else:
-            pass
-
-
-class ModuleInspector:
-    def __init__(self):
-        self.modules = self.getsys_module()
-        self.curents = self.modules
-        self.curentpath = sys.path.copy()
-        self.modulepathnow = []
-
-    def getsys_module(self):
-        return sorted(
-            [
-                    module.name
-                    for module in pkgutil.iter_modules([x for x in sys.path if x])
-                    if not module.name.strip().startswith("~")
-                    and not module.name.strip().startswith("__pycache__")
-            ]
-        )
-        
-    def get_module(self, paths:list=[]):
-        def getmodules(path:list, result:list):
-            result.extend(sorted(
-                [
-                    module.name
-                    for module in pkgutil.iter_modules(path)
-                    if not module.name.strip().startswith("~")
-                    and not module.name.strip().startswith("__pycache__")
-                ]
-            ))
-
-        threads, result = [[], self.curents]
-        if paths.__len__()<1:
-                paths = [os.getcwd()]
-        else:
-            pass
-        
-
-        for path in paths:
-            thread = threading.Thread(target=getmodules, args=([path], result))
-            thread.start()
-            threads.append(thread)
-
-        for thread in threads:
-            thread.join()
-
-        self.modulepathnow = paths
-        return result
-        
-
-    def list_classes(self, module):
-        try:
-            imported_module = importlib.import_module(module)
-            classes = [
-                obj
-                for name, obj in inspect.getmembers(imported_module)
-                if inspect.isclass(obj)
-            ]
-            if not classes:
-                pass
-            return classes
-        except Exception as e:
-            return []
-
-    def get_class_details(self, cls):
-        details = {"name": cls.__name__, "variables": [], "functions": []}
-
-        for name, obj in inspect.getmembers(cls):
-            if inspect.isfunction(obj):
-                func_details = {"name": name, "params": str(inspect.signature(obj))}
-                details["functions"].append(func_details)
-            elif not name.startswith("__") and not inspect.ismodule(obj):
-                details["variables"].append(name)
-
-        return details
-        
-    def get_function_detail(self, module):
-        details = []
-        try:
-            for name, obj in inspect.getmembers(importlib.import_module(module)):
-                if inspect.isfunction(obj):
-                    func_details = {"name": name, "params": str(inspect.signature(obj))}
-                    details.append(func_details)
-        except:
-            pass
-        return details
-
-    def get_global_variables(self, module):
-        try:
-            imported_module = importlib.import_module(module)
-            # global_vars = {name: self.serialize_value(value) for name, value in vars(imported_module).items()
-            #               if not (inspect.isclass(value) or inspect.isfunction(value)) and not name.startswith('__')}
-            global_vars = [
-                name
-                for name, value in vars(imported_module).items()
-                if not (inspect.isclass(value) or inspect.isfunction(value))
-                and not name.startswith("__")
-            ]
-            return global_vars
-        except Exception as e:
-            return []
-
-    def serialize_value(self, value):
-        """Serialize values for JSON compatibility."""
-        if isinstance(value, (int, float, str, bool, list, dict)):
-            return value
-        elif callable(value):
-            return f"Function: {value.__name__}"
-        else:
-            return str(value)  # Convert other types to string
-
-    def inspect_module(self, module_name):
-        if self.modulepathnow.__len__()>=1:
-            sys.path.extend(self.modulepathnow)
-        self.modulepathnow = []
-        try:
-            classes = self.list_classes(module_name)
-            global_vars = self.get_global_variables(module_name)
-            result = {
-                "module": module_name,
-                "variables": global_vars,
-                "classes": [],
-                "functions": self.get_function_detail(module_name),
-            }
-
-            for cls in classes:
-                class_details = self.get_class_details(cls)
-                result["classes"].append(class_details)
-
-            # Convert the result to JSON and print it
-
-            sys.path = self.curentpath
-            return result
-        except Exception as e:
-            sys.path = self.curentpath
-            return None
-
-
-def create_file_or_folder(path: str) -> str:
+def setTitle(title: str):
     """
-    Membuat file atau folder di path yang diberikan.
-
-    Args:
-        path (str): Path lengkap tempat file atau folder akan dibuat.
-
-    Returns:
-        str: Pesan konfirmasi yang menunjukkan apakah file atau folder berhasil dibuat.
+    Fungsi setTitle bertugas untuk mengatur judul konsol (console title) berdasarkan parameter title yang diberikan.\n
+    Jika inputan title memiliki panjang lebih dari 30 karakter maka potong karakternya
     """
+    process = title
+    Getitles = get_console_title()
+    if os.path.isdir(process) or os.path.isfile(process):
+        length = int(process.__len__() / 2)
+        if length < 28:
+            x = process.__len__()
+            nexts = int(50 - x) - (x / 2)
+            if nexts < 28:
+                length = int((28 - nexts) + nexts)
+            else:
+                length = nexts
+        elif length > 50:
+            length = 28
+        process = shorten_path(process, length)
 
-    if not path:
-        return "Path is empty."
-
-    if os.path.isdir(path):
-        return f"The folder '{os.path.basename(path)}' already exists."
-
-    if os.path.isfile(path):
-        return f"The file '{os.path.basename(path)}' already exists."
-
-    folder, filename = os.path.split(path)
-    if "." in os.path.basename(path) and os.path.exists(folder):
-        # Membuat file
-        try:
-            if folder and not os.path.exists(folder):
-                return f"Failed to create the file '{filename}'"
-            with open(path, "wb") as f:
-                pass  # Membuat file kosong
-            return f"The file '{filename}' has been successfully created."
-        except Exception as e:
-            return f"Failed to create the file '{filename}'"
-    elif os.path.exists(folder) and folder:
-        # Membuat folder
-        try:
-            os.makedirs(path)
-            return (
-                f"The folder '{os.path.basename(path)}' has been successfully created."
-            )
-        except FileExistsError:
-            return f"The folder '{os.path.basename(path)}' already exists."
-        except Exception as e:
-            return f"Failed to create the folder '{os.path.basename(path)}'."
+    if Getitles.startswith("Win-SuperNano"):
+        output = str("Win-SuperNano {titles}".format(titles=process))
     else:
-        return "Something happened."
+        output = title
+    set_console_title(output)
 
 
-def is_binary_file(file_path):
+@complex_handle_errors(loggering=logging, nomessagesNormal=False)
+def parse_args():
     """
-    Menentukan apakah file adalah file biner atau bukan.
 
-    Args:
-        file_path (str): Path ke file yang akan diperiksa.
+    Fungsi parse_args bertugas untuk mendapatkan\menangkap argument konsol (console title) yang diberikan oleh user.\n
 
-    Returns:
-        bool: True jika file adalah file biner, False jika bukan.
     """
-    try:
-        with open(file_path, "rb") as file:
-            chunk = file.read(1024)  # Membaca bagian pertama file (1KB)
-            # Cek apakah file memiliki karakter yang tidak biasa untuk teks
-            if b"\0" in chunk:  # Null byte adalah indikator umum dari file biner
-                return True
-            # Cek apakah file sebagian besar berisi karakter teks (misalnya ASCII)
-            text_chars = b"".join([bytes((i,)) for i in range(32, 127)]) + b"\n\r\t\b"
-            non_text_chars = chunk.translate(None, text_chars)
-            if (
-                len(non_text_chars) / len(chunk) > 0.30
-            ):  # Jika lebih dari 30% karakter non-teks
-                return True
-        return False
-    except Exception as e:
-        return False
 
-def validate_file(file_path, max_size_mb=100, max_read_time=2):
-    try:
-        # Periksa ukuran file
-        file_size = os.path.getsize(file_path)
-        if file_size > max_size_mb * 1024 * 1024:
-            return False
+    parser = argparse.ArgumentParser(
+        description="An extension on nano for editing directories in CLI."
+    )
 
-        # Mulai waktu pembacaan
-        start_time = time.time()
+    parser.add_argument(
+        "path",
+        default=os.path.split(thisfolder)[0],
+        nargs="?",
+        type=str,
+        help="Target file or directory to edit.",
+    )
 
-        # Baca file
-        with open(file_path, "rb") as f:
-            # Baca bagian pertama file untuk memeriksa apakah file biner
-            first_bytes = f.read(1024)
-            if b"\x00" in first_bytes:
-                return False
+    args = parser.parse_args()
 
-            # Lanjutkan membaca file
-            while f.read(1024):
-                # Periksa waktu yang telah digunakan untuk membaca
-                elapsed_time = time.time() - start_time
-                if elapsed_time > max_read_time:
-                    return False
+    path = resolve_relative_path(args.path, "") or "."
 
-        # Jika semua pemeriksaan lolos, file valid
+    if os.path.exists(path):
+        if validate_folder(path=path):
+            pass
+
+        else:
+            logging.error(f"ERROR - {path} path cannot access")
+
+            exit()
+
+    else:
+        logging.error(f"ERROR - {path} path does not exist")
+
+        exit()
+
+    return resolve_relative_path_v2(path).replace("\\", "/")
+
+
+class PlainButton(urwid.Button):
+    """
+    Class PlainButton bertugas untuk mengkoustomisasi button dan menghilangkan karakter < dan >.\n
+    """
+
+    button_left = urwid.Text("")
+    button_right = urwid.Text("")
+
+
+class EditableButton(urwid.WidgetWrap):
+    def __init__(self, label, on_save):
+        self.label = label
+        self.on_save = on_save
+        self.button = PlainButton(label)
+        self.last_click_time = 0
+        urwid.connect_signal(self.button, "click", self.on_click)
+        self._w = self.button
+
+    def on_click(self, button):
+        current_time = time.time()
+        # Check for double click within 0.3 seconds
+        if current_time - self.last_click_time < 0.3:
+            self.edit_text(button)
+        self.last_click_time = current_time
+
+    def edit_text(self, button):
+        self.edit = urwid.Edit(multiline=False, edit_text=self.label)
+        urwid.connect_signal(self.edit, "change", self.on_change)
+        self._w = urwid.AttrMap(self.edit, None, focus_map="reversed")
+
+    def on_change(self, edit, new_text):
+        self.label = new_text
+
+    def keypress(self, size, key):
+        if isinstance(self._w.base_widget, urwid.Edit):
+            if key == "enter":
+                self.save_and_restore()
+            else:
+                return self._w.keypress(size, key)
+        else:
+            return super().keypress(size, key)
+
+    def save_and_restore(self):
+        self.on_save(self.label)
+        self.button = PlainButton(self.label)
+        urwid.connect_signal(self.button, "click", self.on_click)
+        self._w = self.button
+
+
+class ClipboardTextBox(urwid.Edit):
+    def keypress(self, size, key):
+        if key == "ctrl c":
+            self.copy_to_clipboard()
+        elif key == "ctrl v":
+            self.paste_from_clipboard()
+        else:
+            return super().keypress(size, key)
+
+    def copy_to_clipboard(self):
+        self.clipboard = self.get_edit_text()
+
+    def paste_from_clipboard(self):
+        if hasattr(self, "clipboard"):
+            cursor_pos = self.edit_pos
+            text = self.get_edit_text()
+            self.set_edit_text(text[:cursor_pos] + self.clipboard + text[cursor_pos:])
+            self.edit_pos = cursor_pos + len(self.clipboard)
+
+
+class SuperNano:
+    """
+    Kelas SuperNano yang sedang Anda kembangkan adalah text editor berbasis console yang menggunakan Python 3.6 ke atas dengan dukungan urwid[curses].
+
+    Pembuat: Ramsyan Tungga Kiansantang (ID)  |  Github: LcfherShell
+
+    Tanggal dibuat: 21 Agustus 2024
+
+    Jika ada bug silahkan kunjungi git yang telah tertera diatas
+    """
+
+    @complex_handle_errors(loggering=logging, nomessagesNormal=False)
+    def __init__(self, start_path="."):
+        "Mengatur path awal, judul aplikasi, widget, dan layout utama. Juga mengatur alarm untuk memuat menu utama dan memulai loop aplikasi."
+        self.current_path = start_path
+        self.current_pathx = self.current_path
+
+        self.current_file_name = None  # Track current file name
+        self.undo_stack, self.redo_stack = [[], []]  # Stack for undo  # Stack for redo
+        self.overlay_POPUP = None  # Overlay untuk popup
+        self.module_package_Python = ModuleInspector()  # memuat module python
+
+        # Set title
+        setTitle("Win-SuperNano v{version}".format(version=__version__))
+
+        # Create widgets
+        """
+        1.loading menu 
+        2. main menu: search, list file or folder, and inspect module python
+        """
+
+        ######Create widgets modulepython menu
+        def create_button(module_name):
+            button = PlainButton(module_name)
+            urwid.connect_signal(button, "click", self.inspect_module, module_name)
+            return urwid.AttrMap(button, None, focus_map="reversed")
+
+        self.listmodules_from_package_Python = urwid.SimpleFocusListWalker(
+            [
+                create_button(module)
+                for module in self.module_package_Python.get_module(sys.path)
+            ]
+        )
+        # Footer text and ListBox for scrolling
+        self.Text_Deinspect_modules_from_package_Python = urwid.Text(
+            "Select a module to inspect."
+        )
+        MenuText_Inspect_modules_from_package_Python = urwid.ListBox(
+            urwid.SimpleFocusListWalker(
+                [self.Text_Deinspect_modules_from_package_Python]
+            )
+        )
+        Box_Deinspect_modules_from_package_Python = urwid.BoxAdapter(
+            MenuText_Inspect_modules_from_package_Python, 14
+        )  # Set max height for the footer
+        # Use a Frame to wrap the main content and footer
+        self.Inspect_modules_from_package_Python = urwid.Frame(
+            body=urwid.LineBox(
+                urwid.ListBox(self.listmodules_from_package_Python),
+                title="Python Modules",
+            ),
+            footer=Box_Deinspect_modules_from_package_Python,
+        )
+
+        ###Create widgets loading menu
+        self.title_loading_widget = urwid.Text(
+            "Win-SuperNano v{version} CopyRight: LcfherShell@{year}\n".format(
+                version=__version__, year=datetime.now().year
+            ),
+            align="center",
+        )
+        self.loading_widget = urwid.Text("Loading, please wait...", align="center")
+        self.main_layout = urwid.Filler(
+            urwid.Pile([self.title_loading_widget, self.loading_widget]),
+            valign="middle",
+        )
+
+        # Create main menu
+        self.main_menu_columns = urwid.Columns([])
+        self.main_menu_pile = urwid.Pile([self.main_menu_columns])
+        self.status_msg_footer_text = urwid.Text(
+            "Press ctrl + q to exit, Arrow keys to navigate"
+        )
+        self.main_footer_text = urwid.Text(
+            "Ctrl+S : Save file    Ctrl+D : Delete File    Ctrl+Z : Undo Edit    Ctrl+Y : Redo Edit    Ctrl+E : Redirect input   Ctrl+R : Refresh UI    ESC: Quit "
+        )
+
+        # Event loop
+        self.loop = urwid.MainLoop(self.main_layout, unhandled_input=self.handle_input)
+        self.loading_alarm = self.loop.set_alarm_in(
+            round(timeout_v1() * timeout_v2(), 1) + 1,
+            lambda loop, user_data: self.load_main_menu(),
+        )
+        self.system_alarm = None
+
+    @complex_handle_errors(loggering=logging, nomessagesNormal=False)
+    def load_main_menu(self):
+        "Menyiapkan dan menampilkan menu utama setelah periode loading, dan menghapus alarm loading."
+        # self.loading_widget.set_text("Press key R")
+        set_low_priority(os.getpid())
+        self.loop.remove_alarm(self.loading_alarm)  # Hentikan alarm
+        self.loading_alarm = None
+        self.switch_to_secondary_layout()
+
+    def switch_to_secondary_layout(self):
+        "Mengubah layout aplikasi ke menu utama yang telah disiapkan."
+        self.setup_main_menu()
+        if self.loading_alarm != None:
+            self.loop.remove_alarm(
+                self.loading_alarm
+            )  # Hentikan alarm loading jika masih ada
+            self.loading_alarm = None
+        self.loop.widget = self.main_layout
+
+    @complex_handle_errors(loggering=logging, nomessagesNormal=False)
+    def setup_main_menu(self):
+        "Menyiapkan dan mengatur widget untuk menu utama, termasuk daftar file, editor teks, dan tombol-tombol fungsional. Mengatur layout untuk tampilan aplikasi."
+        # Define widgets
+        self.file_list = urwid.SimpleFocusListWalker(self.get_file_list())
+        self.file_list_box = urwid.ListBox(self.file_list)
+        self.text_editor = urwid.Edit(multiline=True)
+        self.current_focus = 0  # 0 for textbox1, 1 for textbox2
+        # Wrap text_editor with BoxAdapter for scrollable content
+        self.text_editor_scrollable = urwid.LineBox(
+            urwid.Filler(self.text_editor, valign="top")
+        )
+
+        # Define menu widgets
+        self.quit_button = PlainButton("Quit", align="center")
+        urwid.connect_signal(self.quit_button, "click", self.quit_app)
+
+        self.search_edit = urwid.Edit(
+            "Search, Rename or Create: ", multiline=False, align="left"
+        )
+        search_limited = urwid.BoxAdapter(
+            urwid.Filler(self.search_edit, valign="top"), height=1
+        )
+
+        self.search_button = PlainButton("Execute", align="center")
+        urwid.connect_signal(self.search_button, "click", self.in_search_)
+
+        padded_button = urwid.Padding(
+            self.search_button, align="center", width=("relative", 50)
+        )  # Tombol berada di tengah dengan lebar 50% dari total layar
+        padded_button = urwid.AttrMap(
+            padded_button, None, focus_map="reversed"
+        )  # Mengatur warna saat tombol difokuskan
+
+        urwid.connect_signal(
+            self.text_editor.base_widget, "change", self.set_focus_on_click, 0
+        )
+        urwid.connect_signal(
+            self.search_edit.base_widget, "change", self.set_focus_on_click, 1
+        )
+
+        # Menu layout
+        self.main_menu_columns = urwid.Columns(
+            [
+                (
+                    "weight",
+                    3,
+                    urwid.AttrMap(search_limited, None, focus_map="reversed"),
+                ),
+                (
+                    "weight",
+                    1,
+                    urwid.AttrMap(padded_button, None, focus_map="reversed"),
+                ),
+                (
+                    "weight",
+                    2,
+                    urwid.AttrMap(self.quit_button, None, focus_map="reversed"),
+                ),
+                # (
+                #    "weight",
+                #    4,
+                #    urwid.AttrMap(urwid.Pile(menu_items), None, focus_map="reversed"),
+                # ),
+            ]
+        )
+
+        self.main_menu_pile = urwid.Pile([self.main_menu_columns])
+
+        # Layout
+        self.main_layout = urwid.Frame(
+            header=self.main_menu_pile,
+            body=urwid.Columns(
+                [
+                    (
+                        "weight",
+                        1,
+                        urwid.LineBox(self.file_list_box, title="Directory Files"),
+                    ),
+                    (
+                        "weight",
+                        1,
+                        urwid.AttrMap(
+                            self.Inspect_modules_from_package_Python,
+                            None,
+                            focus_map="reversed",
+                        ),
+                    ),
+                    (
+                        "weight",
+                        3,
+                        urwid.LineBox(
+                            urwid.Pile([self.text_editor_scrollable]), title="TextBox"
+                        ),
+                    ),
+                ]
+            ),
+            footer=urwid.Pile([self.status_msg_footer_text, self.main_footer_text]),
+        )
+        self.loop.set_alarm_in(timeout_v2(), self.update_uiV2)
+        self.system_alarm = self.loop.set_alarm_in(
+            timeout_v2() + 1,
+            lambda loop, user_data: self.system_usage(),
+        )
+        urwid.TrustedLoop(self.loop).set_widget(self.main_layout)
+
+    @complex_handle_errors(loggering=logging, nomessagesNormal=False)
+    def create_modules_menus(self, listmodulename: list):
+        def create_button(module_name):
+            button = PlainButton(module_name)
+            urwid.connect_signal(button, "click", self.inspect_module, module_name)
+            return urwid.AttrMap(button, None, focus_map="reversed")
+
+        return [create_button(module) for module in listmodulename]
+
+    @complex_handle_errors(loggering=logging, nomessagesNormal=False)
+    def inspect_module(self, button, module_name):
+        result = self.module_package_Python.inspect_module(module_name)
+        if result:
+            if "module" in result.keys():
+                result_text = f"Module: {result['module']}\n\nGlobal Variables:\n"
+                result_text += ", ".join(result["variables"])
+                if result["classes"]:
+                    result_text += "\n\nClass:\n"
+                    for cls in result["classes"]:
+                        if cls['name']:
+                            result_text += f"Class: {cls['name']}\n"
+                            result_text += "  Variables:\n"
+                            result_text += "  " + "\n > ".join(cls["variables"]) + "\n\n"
+                            if cls["functions"]:
+                                result_text += "  Function:\n"
+                                for func in cls["functions"]:
+                                    result_text += f" > {func['name']}{func['params']}\n\n"
+                for funcs in result["functions"]:
+                    if funcs['name']:
+                        result_text += f"\nFunction: {funcs['name']}\n"
+                        result_text += f" > {funcs['name']}{funcs['params']}\n\n"
+            self.Text_Deinspect_modules_from_package_Python.set_text(result_text)
+        else:
+            self.Text_Deinspect_modules_from_package_Python.set_text(
+                "Error inspecting module."
+            )
+
+    @complex_handle_errors(loggering=logging, nomessagesNormal=False)
+    def setup_popup(self, options, title, descrip: str = ""):
+        "Menyiapkan konten dan layout untuk menu popup dengan judul, deskripsi, dan opsi yang diberikan."
+        # Konten popup
+        menu_items = []
+        if descrip:
+            menu_items = [urwid.Text(descrip, align="center"), urwid.Divider("-")]
+
+        # Tambahkan opsi ke dalam menu popup
+        for option in options:
+            menu_items.append(option)
+
+        # Tambahkan tombol untuk menutup popup
+        menu_items.append(PlainButton("Close", on_press=self.close_popup))
+
+        # Buat listbox dari opsi yang sudah ada
+        popup_content = urwid.ListBox(urwid.SimpleFocusListWalker(menu_items))
+
+        # Tambahkan border dengan judul
+        self.popup = urwid.LineBox(popup_content, title=title)
+
+    def on_option_selected(self, button):
+        "Menangani pilihan opsi dari popup dengan menutup popup dan mengembalikan label opsi yang dipilih."
+        urwid.emit_signal(button, "click")
+        getbutton = button.get_label()
+        self.close_popup(None)
+        return getbutton
+
+    @complex_handle_errors(loggering=logging, nomessagesNormal=False)
+    def show_popup(self, title: str, descrip: str, menus: list):
+        "Menampilkan popup menu dengan judul, deskripsi, dan daftar opsi yang diberikan."
+        # Siapkan popup dengan judul, descrip, dan opsi
+        self.setup_popup(title=title, descrip=descrip, options=menus)
+
+        # Tentukan ukuran dan posisi popup
+        popup_width = 35
+        popup_height = 25
+        self.overlay_POPUP = urwid.Overlay(
+            self.popup,
+            self.main_layout,
+            "center",
+            ("relative", popup_width),
+            "middle",
+            ("relative", popup_height),
+        )
+        self.loop.widget = self.overlay_POPUP
+
+    @complex_handle_errors(loggering=logging, nomessagesNormal=False)
+    def close_popup(self, button):
+        "Menutup popup menu dan mengembalikan tampilan ke layout utama."
+        self.overlay_POPUP = None
+        self.loop.widget = self.main_layout
+
+    @complex_handle_errors(loggering=logging, nomessagesNormal=False)
+    def get_file_list(self):
+        "Mengambil daftar file dan direktori di path saat ini, termasuk opsi untuk naik satu level di direktori jika bukan di direktori root."
+
+        files = []
+
+        if self.current_path != ".":  # Cek apakah bukan di direktori root
+            button = PlainButton("...")
+
+            urwid.connect_signal(button, "click", self.go_up_directory)
+
+            files.append(urwid.AttrMap(button, None, focus_map="reversed"))
+
+        for f in os.listdir(f"{self.current_path}"):
+            if os.path.isdir(resolve_relative_path(self.current_path, f)):
+                f = f + "/"
+
+            button = PlainButton(f)
+
+            urwid.connect_signal(button, "click", self.open_file, f)
+
+            files.append(urwid.AttrMap(button, None, focus_map="reversed"))
+
+        return files
+
+    def handle_input(self, key):
+        "Menangani input keyboard dari pengguna untuk berbagai tindakan seperti keluar, menyimpan, menghapus, undo, redo, copy, paste, dan refresh UI."
+        if key in ("ctrl q", "ctrl Q", "esc"):
+            self.show_popup(
+                menus=[PlainButton("OK", on_press=lambda _x: self.quit_app())],
+                title="Confirm Quit",
+                descrip="Are you sure you Quit",
+            )
+
+        elif key in ("ctrl s", "ctrl S"):
+            # self.save_file()
+            self.show_popup(
+                menus=[
+                    PlainButton(
+                        "OK",
+                        on_press=lambda _x: self.close_popup(None)
+                        if self.save_file()
+                        else None,
+                    )
+                ],
+                title="Save File",
+                descrip="Are you sure you want to save the file changes",
+            )
+
+        elif key in ("ctrl d", "ctrl D"):
+            self.show_popup(
+                menus=[
+                    PlainButton(
+                        "OK",
+                        on_press=lambda _x: self.close_popup(None)
+                        if self.delete_file()
+                        else None,
+                    )
+                ],
+                title="Delete File",
+                descrip="Are you sure you want to delete the file",
+            )
+        elif key in ("ctrl z", "ctrl Z"):
+            self.undo_edit()
+        elif key in ("ctrl y", "ctrl Y"):
+            self.redo_edit()
+        elif key in ("ctrl c", "ctrl C"):
+            self.copy_text_to_clipboard()
+        elif key in ("ctrl v", "ctrl V"):
+            self.paste_text_from_clipboard()
+        elif key in ("ctrl r", "ctrl R"):
+            self.switch_to_secondary_layout()
+        elif key in ("f1", "ctrl e", "ctrl E"):
+            self.current_focus = 1 if self.current_focus == 0 else 0
+
+    @complex_handle_errors(loggering=logging, nomessagesNormal=False)
+    def get_current_edit(self):
+        "Mengembalikan widget edit yang sedang difokuskan (text editor atau search edit)."
+        if self.current_focus == 0:
+            return self.text_editor.base_widget
+        elif self.current_focus == 1:
+            return self.search_edit.base_widget
+        return None
+
+    def set_focus_on_click(self, widget, new_edit_text, index):
+        "Mengatur fokus pada widget edit berdasarkan klik dan indeks."
+        self.current_focus = index
+
+    @complex_handle_errors(loggering=logging, nomessagesNormal=False)
+    def copy_text_to_clipboard(self):
+        "Menyalin teks dari widget edit yang sedang aktif ke clipboard."
+        current_edit = self.get_current_edit()
+        if current_edit:
+            if hasattr(current_edit, "edit_pos") and hasattr(
+                current_edit, "get_edit_text"
+            ):
+                self.status_msg_footer_text.set_text("Text copied to clipboard.")
+                cursor_position = current_edit.edit_pos
+                pyperclip.copy(
+                    current_edit.get_edit_text()[cursor_position:]
+                    or current_edit.get_edit_text()
+                )
+
+    @complex_handle_errors(loggering=logging, nomessagesNormal=False)
+    def paste_text_from_clipboard(self):
+        "Menempelkan teks dari clipboard ke widget edit yang sedang aktif."
+        pasted_text = pyperclip.paste()  # Mengambil teks dari clipboard
+        current_edit = self.get_current_edit()
+        if current_edit:
+            if hasattr(current_edit, "edit_pos") and hasattr(
+                current_edit, "get_edit_text"
+            ):
+                current_text = (
+                    current_edit.get_edit_text()
+                )  # Mendapatkan teks saat ini di widget Edit
+                cursor_position = (
+                    current_edit.edit_pos
+                )  # Mendapatkan posisi kursor saat ini
+
+                # Membagi teks berdasarkan posisi kursor
+                text_before_cursor = current_text[:cursor_position]
+                text_after_cursor = current_text[cursor_position:]
+
+                # Gabungkan teks sebelum kursor, teks yang ditempelkan, dan teks setelah kursor
+                new_text = text_before_cursor + pasted_text + text_after_cursor
+
+                # Set teks baru dan sesuaikan posisi kursor
+                current_edit.set_edit_text(new_text)
+                current_edit.set_edit_pos(cursor_position + len(pasted_text))
+                self.status_msg_footer_text.set_text("Text paste from clipboard.")
+
+    @complex_handle_errors(loggering=logging, nomessagesNormal=False)
+    def go_up_directory(self, button):
+        "Naik satu level ke direktori atas dan memperbarui daftar file."
+        self.current_path = os.path.dirname(self.current_path)
+        self.file_list[:] = self.get_file_list()
+
+    @complex_handle_errors(loggering=logging, nomessagesNormal=False)
+    def open_file(self, button, file_name):
+        "Membuka file yang dipilih, membaca isinya, dan menampilkannya di text editor. Jika itu adalah direktori, berpindah ke direktori tersebut."
+        file_path = os.path.join(self.current_path, file_name)
+        _c, ext = os.path.splitext(file_path)
+        if os.path.isdir(file_path):
+            if validate_folder(file_path):
+                try:
+                    sys.path.remove(self.current_path)
+                except:
+                    pass
+                self.current_path = file_path
+                self.file_list[:] = self.get_file_list()
+            else:
+                self.status_msg_footer_text.set_text("Folder access denied!")
+        else:
+            if validate_folder(os.path.dirname(file_path)) and validate_file(
+                file_path, os.path.getsize(file_path) or 20, 6
+            ):
+                try:
+                    with open(
+                        file_path, "r+", encoding=sys.getfilesystemencoding()
+                    ) as f:
+                        content = f.read()
+                except UnicodeDecodeError:
+                    with open(file_path, "r+", encoding="latin-1") as f:
+                        content = f.read()
+                content = content.replace("\t", " " * 4)
+                self.undo_stack.append(content)
+                self.text_editor.set_edit_text(content)
+                self.current_file_name = file_name  # Track the current file name
+
+                # if str(ext).lower() in ( ".pyx", ".pyz", ".py"):
+                #    self.listmodules_from_package_Python[:] = self.modules_menus(self.current_path)
+
+                self.main_layout.body.contents[1][0].set_title(file_name)
+
+            else:
+                self.status_msg_footer_text.set_text("File access denied!")
+
+        if str(ext).lower().startswith((".pyx", ".pyz", ".py")) != True:
+            self.Text_Deinspect_modules_from_package_Python.set_text(
+                "Select a module to inspect."
+            )
+
+    @complex_handle_errors(loggering=logging, nomessagesNormal=False)
+    def save_file(self):
+        "Menyimpan perubahan yang dilakukan pada file saat ini dan mengembalikan status keberhasilan."
+        if self.current_file_name:
+            file_path = os.path.join(self.current_path, self.current_file_name)
+            try:
+                with open(file_path, "w+", encoding=sys.getfilesystemencoding()) as f:
+                    f.write(self.text_editor.get_edit_text())
+            except:
+                with open(file_path, "w+", encoding="latin-1") as f:
+                    f.write(self.text_editor.get_edit_text())
+            self.status_msg_footer_text.set_text("File saved successfully!")
         return True
 
-    except Exception as e:
-        return False
+    @complex_handle_errors(loggering=logging, nomessagesNormal=False)
+    def delete_file(self):
+        "Menghapus file yang dipilih dan memperbarui daftar file serta text editor dan mengembalikan status keberhasilan."
+        if self.current_file_name:
+            file_path = os.path.join(self.current_path, self.current_file_name)
+            if os.path.isfile(file_path):
+                os.remove(file_path)
+                self.text_editor.set_edit_text("")
+                self.file_list[:] = self.get_file_list()
+                self.status_msg_footer_text.set_text("File deleted successfully!")
+                self.current_file_name = None  # Clear the current file name
+            else:
+                self.status_msg_footer_text.set_text("File does not exist!")
+        return True
 
+    @complex_handle_errors(loggering=logging, nomessagesNormal=False)
+    def save_undo_state(self):
+        "Menyimpan status saat ini dari text editor ke stack undo dan mengosongkan stack redo."
+        # Save the current content of the text editor for undo
+        current_text = self.text_editor.get_edit_text()
+        self.undo_stack.append(current_text)
+        self.redo_stack.clear()  # Clear redo stack on new change
 
-def check_class_in_package(package_name, class_name):
-    try:
-        # Import the package
-        package = importlib.import_module(package_name)
-        # Cek apakah kelas ada di dalam modul
-        if hasattr(package, class_name):
-            cls = getattr(package, class_name)
-            # Pastikan itu adalah kelas, bukan atribut atau fungsi
-            if inspect.isclass(cls):
-                return True, "ClassFound"
-        return False, "ClassNotFound"
-    except ModuleNotFoundError:
-        return False, "ModuleNotFoundError"
+    @complex_handle_errors(loggering=logging, nomessagesNormal=False)
+    def undo_edit(self):
+        "Melakukan undo terhadap perubahan terakhir pada text editor dengan mengembalikan status dari stack undo."
+        if self.undo_stack:
+            # Save the current state to redo stack
+            self.redo_stack.append(self.text_editor.get_edit_text())
 
+            # Restore the last state
+            last_state = self.undo_stack.pop()
+            self.text_editor.set_edit_text(last_state)
+            self.status_msg_footer_text.set_text("Undo performed.")
 
-def resolve_relative_path(current_path: str, relative_path: str) -> str:
-    # Menggabungkan current_path dengan relative_path (misalnya "../")
-    target_path: str = os.path.normpath(os.path.join(current_path, relative_path))
-    return target_path
+    @complex_handle_errors(loggering=logging, nomessagesNormal=False)
+    def redo_edit(self):
+        "Melakukan redo terhadap perubahan terakhir yang diundo dengan mengembalikan status dari stack redo."
+        if self.redo_stack:
+            # Save the current state to undo stack
+            self.undo_stack.append(self.text_editor.get_edit_text())
 
+            # Restore the last redone state
+            last_state = self.redo_stack.pop()
+            self.text_editor.set_edit_text(last_state)
+            self.status_msg_footer_text.set_text("Redo performed.")
 
-def resolve_relative_path_v2(path: str) -> str:
-    target_folder: str = resolve_relative_path(
-        os.getcwd().replace("\\", "/"), path.replace("\\", "/")
-    )
-    return target_folder
-
-
-def get_latest_version(package_name):
-    with Fetch() as req:
-        response = req.get(
-            f"https://pypi.org/pypi/{package_name}/json",
-            max_retries=3,
-            timeout=8,
-            follow_redirects=True,
+    @complex_handle_errors(loggering=logging, nomessagesNormal=False)
+    def highlight_text(self, search_text):
+        text = self.text_editor.get_edit_text()
+        result = []
+        # Pisahkan teks menjadi sebelum, pencarian, dan sesudahnya
+        for x in findpositions(f"{search_text}", text):
+            if x:
+                _x = list(x)
+                result.append(str(_x[0][1][1]))
+        if result.__len__() > 8:
+            return "Total: {total}  Pos: {posts}".format(
+                total=result.__len__(), posts=", ".join(result[:8]) + "..."
+            )
+        return "Total: {total}  Pos: {posts}".format(
+            total=result.__len__(), posts=", ".join(result)
         )
-    data = response.json()
-    if filter_json(data=data, keys=["info"]):
-        return data["info"]["version"]
-    return None
+
+    @complex_handle_errors(loggering=logging)
+    def in_search_(self, button):
+        "Mencari file atau folder berdasarkan input pencarian, membuka file jika ditemukan, atau memperbarui daftar file jika folder ditemukan."
+        search_query = self.search_edit.get_edit_text().replace("\\", "/").strip()
+        if search_query:
+            if ":" in search_query and not search_query.startswith("@[select]"):
+                if os.path.isfile(search_query):
+                    dirname, file_name = os.path.dirname(
+                        search_query
+                    ), os.path.basename(search_query)
+                    try:
+                        with open(search_query, "r+", encoding="utf-8") as f:
+                            content = f.read()
+                    except UnicodeDecodeError:
+                        with open(search_query, "r+", encoding="latin-1") as f:
+                            content = f.read()
+                    content = content.replace("\t", " " * 4)
+
+                    self.undo_stack.append(content)
+                    self.text_editor.set_edit_text(content)
+                    self.current_file_name = file_name  # Track the current file name
+                    self.main_layout.body.contents[1][0].set_title(file_name)
+
+                elif os.path.isdir(search_query):
+                    dirname = search_query
+                else:
+                    x, _y = os.path.split(search_query)
+                    if self.current_path.replace("\\", "/") == x.replace(
+                        "\\", "/"
+                    ) and os.path.isdir(x):
+                        search_query = str(create_file_or_folder(search_query))
+                        self.update_ui()
+                        self.file_list[:] = self.get_file_list()
+
+                    dirname = None
+
+                if dirname:
+                    self.current_path = dirname
+                    self.file_list[:] = self.get_file_list()
+                self.status_msg_footer_text.set_text(
+                    f"Search results for '{search_query}'"
+                )
+            else:
+                search_resultsFile = [
+                    f for f in os.listdir(self.current_path) if search_query in f
+                ]
+                search_resultsModule = [
+                    module
+                    for module in self.module_package_Python.curents
+                    if search_query in module
+                ]
+                search_resultsHighlight_Text = self.highlight_text(search_query)
+
+                if search_resultsFile and search_resultsModule:
+                    self.listmodules_from_package_Python[:] = self.create_modules_menus(
+                        search_resultsModule
+                    )
+                    self.file_list[:] = self.create_file_list(search_resultsFile)
+                    self.status_msg_footer_text.set_text(
+                        f"Search results for '{search_query}'"
+                    )
+                elif search_resultsFile:
+                    self.file_list[:] = self.create_file_list(search_resultsFile)
+                    self.status_msg_footer_text.set_text(
+                        f"Search results for '{search_query}'"
+                    )
+                else:
+                    if search_resultsModule:
+                        self.listmodules_from_package_Python[
+                            :
+                        ] = self.create_modules_menus(search_resultsModule)
+                        self.file_list[:] = self.get_file_list()
+                        self.status_msg_footer_text.set_text(
+                            f"Search results for '{search_query}'"
+                        )
+                    elif search_resultsHighlight_Text and not search_query.startswith(
+                        "@[files]"
+                    ):
+                        self.status_msg_footer_text.set_text(
+                            f"Search results for '{search_query}' {search_resultsHighlight_Text}"
+                        )
+                    else:
+                        if (
+                            search_query.startswith("@[select]")
+                            and search_query.find("[@rename]") > -1
+                        ):
+                            x = search_query.replace("@[select]", "", 1).split(
+                                "[@rename]", 1
+                            )
+                            if x.__len__() == 2:
+                                getREName = [
+                                    f
+                                    for f in os.listdir(self.current_path)
+                                    if x[0] in f
+                                ]
+                                if getREName.__len__() > 0:
+                                    oldfilesorfolder, newplace = [
+                                        os.path.join(self.current_path, getREName[0]),
+                                        os.path.join(self.current_path, x[1]),
+                                    ]
+                                    try:
+                                        os.rename(oldfilesorfolder, newplace)
+                                        self.status_msg_footer_text.set_text(
+                                            f"Rename {getREName[0]} success"
+                                        )
+                                        self.update_ui()
+                                        self.file_list[:] = self.get_file_list()
+                                    except:
+                                        pass
+                        else:
+                            self.status_msg_footer_text.set_text(
+                                f"Search results for {search_query}"
+                            )
+
+        else:
+            self.file_list[:] = self.get_file_list()
+            self.listmodules_from_package_Python[:] = self.create_modules_menus(
+                self.module_package_Python.curents
+            )
+            self.status_msg_footer_text.set_text("")
+
+    @complex_handle_errors(loggering=logging)
+    def create_file_list(self, files):
+        "Membuat daftar widget untuk file yang ditemukan sesuai hasil pencarian."
+        widgets = []
+        for f in files:
+            if os.path.isdir(os.path.join(self.current_path, f)):
+                f = f + "/"
+            button = PlainButton(f)
+            urwid.connect_signal(button, "click", self.open_file, f)
+            widgets.append(urwid.AttrMap(button, None, focus_map="reversed"))
+        return widgets
+
+    def system_usage(self):
+        "Memantau penggunaan CPU dan menampilkan peringatan jika konsumsi CPU tinggi."
+        timemming = timeout_v1()
+        if timemming > 0.87:
+            self.status_msg_footer_text.set_text("High CPU utilization alert")
+
+    def update_ui(self):
+        "Memperbarui tampilan UI aplikasi."
+        self.loop.draw_screen()
+
+    def update_uiV2(self, *args, **kwargs):
+        "Memperbarui tampilan UI aplikasi."
+        self.loop.set_alarm_in(timeout_v2(), self.update_uiV2)
+        self.loop.draw_screen()
+
+    def quit_app(self, button=None):
+        "Menghentikan aplikasi dan menghapus alarm sistem jika ada."
+        if self.system_alarm != None:
+            self.loop.remove_alarm(self.system_alarm)  # Hentikan alarm
+        self.system_alarm = None
+        raise urwid.ExitMainLoop()
+
+    def run(self):
+        "Memulai loop utama urwid untuk menjalankan aplikasi."
+        self.loop.run()
 
 
-def check_update(package_name):
-    installed_version = pkg_resources.get_distribution(package_name).version
-    latest_version = get_latest_version(package_name)
+@complex_handle_errors(loggering=logging)
+def main(path: str):
+    app = SuperNano(start_path=path)
+    app.run()
 
-    if installed_version != latest_version:
-        print(
-            f"Package {package_name} can be updated from version {installed_version} to {latest_version}."
-        )
-    else:
-        print(f"Package {package_name} is up to date.")
+    
+if __name__ == "__main__":
+    set_low_priority(os.getpid())
+    #########mendapatkan process terbaik tanpa membebani ram dan cpu
 
+    safe_executor = SafeProcessExecutor(
+        max_workers=2
+    )  #########mendapatkan process terbaik tanpa membebani cpu
+    safe_executor.submit(main, path=parse_args())
+    time.sleep(timeout_v2())
+    safe_executor.shutdown(
+        wait=True
+    )  ###mmenunggu process benar-benar berhenti tanpa memaksanya
+    rd = StreamFile(
+        file_path=fileloogiing,
+        buffer_size=os.path.getsize(fileloogiing) + 2,
+        print_delay=timeout_v2(),
+    )  #########mendapatkan process terbaik membaca file logging tanpa membebani cpu
+    for r in rd.readlines():
+        print(r)
+    rd.eraseFile()  # membersihkan loggging
+    rd.close()
