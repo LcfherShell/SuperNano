@@ -15,6 +15,7 @@ try:
         validate_file,
         ModuleInspector,
         create_file_or_folder,
+        resolve_relative_path,
         resolve_relative_path_v2,
         all_system_paths,
     )
@@ -31,6 +32,7 @@ except:
             validate_file,
             ModuleInspector,
             create_file_or_folder,
+            resolve_relative_path,
             resolve_relative_path_v2,
             all_system_paths,
         )
@@ -46,6 +48,7 @@ except:
             validate_file,
             ModuleInspector,
             create_file_or_folder,
+            resolve_relative_path,
             resolve_relative_path_v2,
             all_system_paths,
         )
@@ -111,22 +114,39 @@ def setTitle(title: str):
 @complex_handle_errors(loggering=logging, nomessagesNormal=False)
 def parse_args():
     """
+
     Fungsi parse_args bertugas untuk mendapatkan\menangkap argument konsol (console title) yang diberikan oleh user.\n
+
     """
+
     parser = argparse.ArgumentParser(
         description="An extension on nano for editing directories in CLI."
     )
-    parser.add_argument("path", help="Target file or directory to edit.")
-    args = vars(parser.parse_args())
-    path = args.get("path", ".").strip().replace("\\", "/")
+
+    parser.add_argument(
+        "path",
+        default=os.path.split(thisfolder)[0],
+        nargs="?",
+        type=str,
+        help="Target file or directory to edit.",
+    )
+
+    args = parser.parse_args()
+
+    path = resolve_relative_path(args.path, "") or "."
+
     if os.path.exists(path):
         if validate_folder(path=path):
             pass
+
         else:
             logging.error(f"ERROR - {path} path cannot access")
+
             exit()
+
     else:
         logging.error(f"ERROR - {path} path does not exist")
+
         exit()
 
     return resolve_relative_path_v2(path).replace("\\", "/")
