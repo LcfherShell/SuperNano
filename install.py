@@ -15,15 +15,20 @@ def search_like_regex(data_list, pattern):
 
 def install_packages(packages:list):
     """ Menginstal beberapa paket Python menggunakan pip. """
-    try:
-        subprocess.check_call([sys.executable, "-m", "pip", "install", *packages])
-        print(f"Packages {', '.join(packages)} installed successfully.")
-        return True
-    except subprocess.CalledProcessError as e:
-        print(f"Error during package installation: {e}")
-    except Exception as e:
-        print(f"General error during package installation: {e}")
-    return False
+    len_pkg:int = packages.__len__()
+    for pkg in packages:
+        try:
+            subprocess.check_call([sys.executable, "-m", "pip", "install", "-q", pkg])
+            print(f"Packages {pkg} installed successfully.")
+        except subprocess.CalledProcessError as e:
+            print(f"Error during package installation: {pkg}")
+            len_pkg-=1
+        except Exception as e:
+            print(f"General error during package installation: {pkg}")
+            len_pkg-=1
+    if len_pkg<packages.__len__():
+        return False
+    return True
 
 def module_version():
     """ Mendapatkan semua versi modul dari GitHub. """
