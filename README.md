@@ -95,4 +95,4 @@ This application was created by Ramsyan Tungga Kiansantang and is licensed under
 ## Conclusion
 `SuperNano` is a console-based text editor designed to make it easy to manage files and directories directly from the command line. It offers powerful tools for users working in a text-based environment.
 
-If you have any questions or need further assistance with the implementation, feel free to contact the developer or check out any additional documentation that may be available. [Email Support] (mailto:alfiandecker2@gmail.com,ramstungga2@gmail.com)
+If you have any questions or need further assistance with the implementation, feel free to contact the developer or check out any additional documentation that may be available. [Email Support](mailto:alfiandecker2@gmail.com,ramstungga2@gmail.com)
