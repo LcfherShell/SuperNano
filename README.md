@@ -12,9 +12,9 @@ Here is the documentation for the `SuperNano` script, a console-based editor wri
 ### Key Features:
 - **Directory Navigation**: Displays the contents of directories and allows navigation between directories.
 - **Text Editing**: Allows editing of text files with undo feature.
-- File Saving**: Saves changes to the opened file.
-- File Deletion**: Deletes the selected file.
-- File Search**: Searches for files or directories by name.
+- **File Saving**: Saves changes to the opened file.
+- **File Deletion**: Deletes the selected file.
+- **File Search**: Searches for files or directories by name.
 
 ## Code Structure
 This script is divided into several important parts:
