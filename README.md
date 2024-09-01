@@ -1,74 +1,75 @@
 <img src="https://repository-images.githubusercontent.com/847198464/b36c0223-b3fa-4846-8f82-21e1b48d7021" alt="Banner" style="max-width: 100%; height: auto;" />
 
-Berikut adalah dokumentasi untuk script `SuperNano`, sebuah editor berbasis konsol yang ditulis menggunakan Python dengan modul `py_cui`. Editor ini menyediakan antarmuka untuk mengelola file dan direktori serta menyediakan fitur pengeditan teks dasar. 
+Here is the documentation for the `SuperNano` script, a console-based editor written in Python with the `py_cui` module. It provides an interface for managing files and directories and provides basic text editing features. 
 
 ---
 
-# Dokumentasi SuperNano
+# SuperNano Documentation
 
-## Deskripsi
-`SuperNano` adalah editor teks berbasis konsol yang memungkinkan pengguna untuk membuka, mengedit, menyimpan, dan menghapus file secara langsung dari antarmuka berbasis teks. Aplikasi ini juga menyediakan fitur edit file, navigasi direktori dan pencarian file.
+## Description
+`SuperNano` is a console-based text editor that allows users to open, edit, save and delete files directly from a text-based interface. It also provides file editing, directory navigation and file search features.
 
-### Fitur Utama:
-- **Navigasi Direktori**: Menampilkan isi dari direktori dan memungkinkan navigasi antar direktori.
-- **Pengeditan Teks**: Memungkinkan pengeditan file teks dengan fitur undo.
-- **Penyimpanan File**: Menyimpan perubahan ke file yang dibuka.
-- **Penghapusan File**: Menghapus file yang dipilih.
-- **Pencarian File**: Mencari file atau direktori berdasarkan nama.
+### Key Features:
+- **Directory Navigation**: Displays the contents of directories and allows navigation between directories.
+- **Text Editing**: Allows editing of text files with undo feature.
+- File Saving**: Saves changes to the opened file.
+- File Deletion**: Deletes the selected file.
+- File Search**: Searches for files or directories by name.
 
-## Struktur Kode
-Script ini dibagi menjadi beberapa bagian penting:
-1. **Imports**: Bagian ini mengimpor modul yang diperlukan untuk menjalankan aplikasi. Selain modul standar Python, script ini juga mengimpor beberapa modul khusus yang berfungsi untuk manajemen sistem, manajemen file, penanganan kesalahan, dan pengaturan waktu.
+## Code Structure
+This script is divided into several important parts:
+1. **Imports**: This section imports the modules required to run the application. In addition to the standard Python modules, this script also imports some specialized modules that serve for system management, file management, error handling, and timing.
 
-2. **Konfigurasi Logging**: Mengatur logging untuk mencatat event atau kesalahan yang terjadi selama aplikasi berjalan.
+2. **Configure Logging**: Set up logging to record events or errors that occur during application running.
 
-3. **Fungsi `setTitle`**: Fungsi ini digunakan untuk mengatur judul dari window konsol sesuai dengan path file atau direktori yang sedang dibuka.
+3. **SetTitle function**: This function is used to set the title of the console window according to the path of the current file or directory.
 
-4. **Class `SuperNano`**: Class ini merupakan inti dari aplikasi yang mengatur berbagai fitur yang ada seperti membuka file, menyimpan file, menghapus file, navigasi direktori, dan lain-lain.
+4. **SuperNano class**: This class is the core of the application that manages various features such as opening files, saving files, deleting files, directory navigation, and others.
 
-5. **Fungsi `parse_args`**: Fungsi ini digunakan untuk memparsing argumen baris perintah yang menentukan file atau direktori target untuk diedit.
+5. **Function `parse_args`**: This function is used to parse command line arguments that specify the target file or directory to edit.
 
-6. **Fungsi `main`**: Fungsi utama yang menginisialisasi objek `PyCUI`, mengatur judul aplikasi, dan memulai antarmuka pengguna.
+6. **The `main` function**: The main function that initializes the `PyCUI` object, sets the application title, and starts the user interface.
 
-7. **Safe Execution**: Menggunakan `SafeProcessExecutor` untuk menjalankan aplikasi dengan aman menggunakan thread.
+7. **Safe Execution**: Uses `SafeProcessExecutor` to safely run the application using threads.
 
-## Detail Implementasi
+## Implementation Details
 
 ### Class `SuperNano`
-Class ini menangani seluruh fungsionalitas aplikasi dan diinisialisasi dengan parameter `root` (objek `PyCUI`) dan `path` (path file atau direktori). Beberapa metode penting dalam class ini adalah:
+This class handles all the functionality of the application and is initialized with the parameters `root` (`PyCUI` object) and `path` (file or directory path). Some important methods in this class are:
 
-- **`__init__`**: Inisialisasi antarmuka dan menentukan apakah `path` adalah file atau direktori.
-- **`open_new_directory`**: Membuka dan menampilkan isi dari direktori baru.
-- **`open_file_dir`**: Membuka file atau navigasi ke direktori yang dipilih.
-- **`save_opened_file`**: Menyimpan file yang sedang dibuka.
-- **`delete_selected_file`**: Menghapus file yang dipilih.
-- **`search_files`**: Mencari file di dalam direktori berdasarkan input pencarian.
+- **`__init__`**: Initializes the interface and determines if `path` is a file or directory.
+- **`open_new_directory`**: Opens and displays the contents of the new directory.
+- **`open_file_dir`**: Opens a file or navigates to the selected directory.
+- **`save_opened_file`**: Saves the currently opened file.
+- **`delete_selected_file`**: Deletes the selected file.
+- **`search_files`**: Searches for files in the directory based on the search input.
 
-### Fungsi `setTitle`
-Fungsi ini mengatur judul window konsol dengan nama file atau direktori yang sedang dibuka, dan menyesuaikan panjangnya agar tidak melebihi batas karakter tertentu.
+### `setTitle` function
+This function sets the title of the console window to the name of the current file or directory, and adjusts its length to not exceed a certain character limit.
 
-### Fungsi `parse_args`
-Fungsi ini digunakan untuk memproses argumen yang diberikan melalui command line. Argumen tersebut akan menentukan file atau direktori mana yang akan dibuka oleh `SuperNano`.
+### `parse_args` function
+This function is used to process the arguments given through the command line. The arguments will determine which file or directory will be opened by `SuperNano`.
 
 ### Safe Execution
-Penggunaan `SafeProcessExecutor` memastikan bahwa aplikasi berjalan dengan aman dan efisien, terutama saat menjalankan fungsi yang mungkin memakan waktu.
+The use of `SafeProcessExecutor` ensures that the application runs safely and efficiently, especially when executing functions that may take time.
 
-## Cara Penggunaan
-Jalankan script ini melalui command line dengan memberikan argumen berupa path file atau direktori yang ingin diedit. Contoh:
+## How to run script
+Run this script through the command line by giving an argument in the form of the path of the file or directory you want to edit. Example:
 ```
 python supernano.py /path/to/directory_or_file
 ```
+or visit [main](https://github.com/LcfherShell/SuperNano/tree/main)
 
-## Lisensi
-Aplikasi ini dibuat oleh Ramsyan Tungga Kiansantang dan dilisensikan di bawah [Lisensi GPL v3](https://www.gnu.org/licenses/gpl-3.0.html). Untuk kontribusi atau pelaporan bug, silakan kunjungi repositori Github yang telah disediakan.
+## License
+This application was created by Ramsyan Tungga Kiansantang and is licensed under the [GPL v3 License](https://www.gnu.org/licenses/gpl-3.0.html). For contributions or bug reporting, please visit the provided Github repository.
 
-## Versi
-- **Versi**: V1.0.0
-- **Tanggal Rilis**: 18 Juli 2024
+## Version
+- **Version**: V1.0.0
+- **Release Date**: July 18, 2024
 
 ---
 
-## Kesimpulan
-`SuperNano` adalah editor teks berbasis konsol yang dirancang untuk memudahkan pengelolaan file dan direktori secara langsung dari command line. Aplikasi ini menawarkan alat yang ringan untuk pengguna yang bekerja di lingkungan berbasis teks.
+## Conclusion
+`SuperNano` is a console-based text editor designed to make it easy to manage files and directories directly from the command line. It offers lightweight tools for users working in a text-based environment.
 
-Jika ada pertanyaan atau butuh bantuan lebih lanjut terkait implementasi, jangan ragu untuk menghubungi pengembang atau melihat dokumentasi tambahan yang mungkin tersedia.
+If you have any questions or need further assistance with the implementation, feel free to contact the developer or check out any additional documentation that may be available. [Email Support](mailto:alfiandecker2@gmail.com,ramstungga2@gmail.com)
