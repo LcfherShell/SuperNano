@@ -1,72 +1,73 @@
 <img src="https://repository-images.githubusercontent.com/847198464/b36c0223-b3fa-4846-8f82-21e1b48d7021" alt="Banner" style="max-width: 100%; height: auto;" />
 
-Berikut adalah dokumentasi untuk script `SuperNano`, sebuah text editor berbasis console yang menggunakan Python 3.6 ke atas dan pustaka `urwid[curses]`.
+Here is the documentation for the `SuperNano` script, a powerful console-based text editor specialized for Windows 8, 10, 11 platforms.
 
 ---
 
-# Dokumentasi SuperNano
+# SuperNano Documentation
 
-## Deskripsi
-`SuperNano` adalah sebuah text editor berbasis console yang dikembangkan menggunakan Python dan pustaka `urwid[curses]`. Aplikasi ini dirancang untuk memberikan pengguna kemampuan untuk mengedit teks, mengelola file, dan melakukan inspeksi modul Python langsung dari antarmuka berbasis console. `SuperNano` mendukung beberapa fitur seperti undo-redo, clipboard (copy-paste), pencarian file, dan inspeksi modul Python.
+## Description
+`SuperNano` is a console-based text editor developed using Python and the `urwid[curses]` library. It is designed to give users the ability to edit text, manage files, and inspect Python modules directly from a console-based interface. SuperNano supports several features such as undo-redo, clipboard (copy-paste), file search, and Python module inspection.
 
-## Fitur Utama
-- **Text Editing**: Editor teks dengan dukungan multiline, undo-redo, copy-paste, dan penyimpanan file.
-- **File Management**: Memungkinkan navigasi direktori, membuka dan menyimpan file, serta membuat dan menghapus file.
+## Key Features
+- **Text Editing**: Text editor with multiline support, undo-redo, copy-paste, and file saving.
+- **File Management**: Allows directory navigation, opening and saving files, and creating and deleting files.
 
-## Kelas dan Metode
+## Classes and Methods
 
 ### 1. `SuperNano`
-`SuperNano` adalah kelas utama yang mengatur seluruh aplikasi, termasuk inisialisasi, pembuatan menu, dan manajemen UI.
+`SuperNano` is the main class that manages the entire application, including initialization, menu creation, and UI management.
 
-#### Atribut:
-- **current_path**: Menyimpan path direktori saat ini.
-- **current_file_name**: Menyimpan nama file yang sedang dibuka.
-- **undo_stack**, **redo_stack**: Stack yang digunakan untuk menyimpan state teks guna mendukung fitur undo-redo.
-- **overlay**: Widget yang digunakan untuk menampilkan popup.
-- **loop**: Objek `urwid.MainLoop` yang menangani event loop aplikasi.
-- **loading_alarm**, **system_alarm**: Alarm untuk mengatur timing penggantian layout dan memonitor sistem.
+#### Attributes:
+- **current_path**: Stores the current directory path.
+- **current_file_name**: Stores the name of the current file.
+- **undo_stack**, **redo_stack**: Stack used to store text state to support undo-redo feature.
+- **overlay**: Widget used to display a popup.
+- **loop**: The `urwid.MainLoop` object that handles application loop events.
+- **loading_alarm**, **system_alarm**: Alarms for timing layout changes and monitoring the system.
 
-#### Metode:
-- **`__init__(self, start_path=".")`**: Inisialisasi kelas, menyiapkan path awal, widget, dan memulai event loop.
-- **`load_main_menu(self)`**: Menyiapkan dan menampilkan menu utama setelah periode loading.
-- **`switch_to_secondary_layout(self)`**: Mengubah layout aplikasi ke menu utama.
-- **`setup_main_menu(self)`**: Mengatur widget untuk menu utama, termasuk daftar file, editor teks, dan tombol-tombol fungsional.
-- **`setup_popup(self, options, title, descrip="")`**: Menyiapkan konten dan layout untuk menu popup.
-- **`show_popup(self, title, descrip, menus)`**: Menampilkan popup menu dengan judul, deskripsi, dan opsi yang diberikan.
-- **`close_popup(self, button)`**: Menutup popup dan mengembalikan tampilan ke layout utama.
-- **`get_file_list(self)`**: Mengambil daftar file dan direktori di path saat ini.
-- **`handle_input(self, key)`**: Menangani input keyboard untuk berbagai tindakan seperti keluar, menyimpan, menghapus, undo, redo, copy-paste, dan refresh UI.
-- **`get_current_edit(self)`**: Mengembalikan widget edit yang sedang difokuskan (text editor atau search edit).
-- **`set_focus_on_click(self, widget, new_edit_text, index)`**: Mengatur fokus pada widget edit berdasarkan klik dan indeks.
-- **`copy_text_to_clipboard(self)`**: Menyalin teks dari widget edit yang sedang aktif ke clipboard.
-- **`paste_text_from_clipboard(self)`**: Menempelkan teks dari clipboard ke widget edit yang sedang aktif.
+#### Methods:
+- **`__init__(self, start_path=“.”)`**: Initialize the class, set up the start path, widgets, and start the event loop.
+- **`load_main_menu(self)`**: Set up and display the main menu after the loading period.
+- **`switch_to_secondary_layout(self)`**: Changes the application layout to the main menu.
+- **`setup_main_menu(self)`**: Set up widgets for the main menu, including the file list, text editor, and functional buttons.
+- **`setup_popup(self, options, title, descrip=“”)`**: Sets up the content and layout for the popup menu.
+- **`show_popup(self, title, descrip, menus)`**: Displays the popup menu with the given title, description, and options.
+- **`close_popup(self, button)`**: Closes the popup and returns to the main layout.
+- **`get_file_list(self)`**: Retrieve a list of files and directories in the current path.
+- **`handle_input(self, key)`**: Handles keyboard input for various actions such as exit, save, delete, undo, redo, copy-paste, and UI refresh.
+- **`get_current_edit(self)`**: Returns the currently focused edit widget (text editor or search edit).
+- **`set_focus_on_click(self, widget, new_edit_text, index)`**: Sets the focus on the edit widget based on click and index.
+- **`copy_text_to_clipboard(self)`**: Copies the text from the current edit widget to the clipboard.
+- **`paste_text_from_clipboard(self)`**: Paste text from the clipboard into the current edit widget.
 
 
-## Penggunaan
-1. **Menjalankan Aplikasi**: Jalankan script `SuperNano` dengan Python 3.6 ke atas di terminal Anda.
-2. **Navigasi File**: Gunakan panah atas dan bawah untuk memilih file di direktori. Tekan Enter untuk membuka file.
-3. **Edit Teks**: Setelah file terbuka, teks dapat diedit langsung di editor. Gunakan `Ctrl+S` untuk menyimpan perubahan.
-4. **Undo-Redo**: Gunakan `Ctrl+Z` untuk undo dan `Ctrl+Y` untuk redo.
-5. **Copy-Paste**: Gunakan `Ctrl+C` untuk copy dan `Ctrl+V` untuk paste.
-6. **Keluar dari Aplikasi**: Tekan `Ctrl+Q` atau `ESC` untuk keluar dari aplikasi.
+## Usage
+1. **Running the Application**: Run the `SuperNano` script with Python 3.6 and above in your terminal.
+2. **Navigate Files**: Use the up and down arrows to select files in the directory. Press Enter to open the file.
+3. **Edit Text**: Once the file is open, the text can be edited directly in the editor. Use `Ctrl+S` to save changes.
+4. **Undo-Redo**: Use `Ctrl+Z` to undo and `Ctrl+Y` to redo.
+5. **Copy-Paste**: Use `Ctrl+C` to copy and `Ctrl+V` to paste.
+6. **Exit Application**: Press `Ctrl+Q` or `ESC` to exit the application.
 
-## Cara Penggunaan
-Jalankan script ini melalui command line dengan memberikan argumen berupa path file atau direktori yang ingin diedit. Contoh:
+## How to use
+Run this script through the command line by giving an argument in the form of the path of the file or directory you want to edit. Example:
 ```
 python supernano.py /path/to/directory_or_file
 ```
+or visit [main](https://github.com/LcfherShell/SuperNano/tree/main)
 
-## Lisensi
-Aplikasi ini dibuat oleh Ramsyan Tungga Kiansantang dan dilisensikan di bawah [Lisensi GPL v3](https://www.gnu.org/licenses/gpl-3.0.html). Untuk kontribusi atau pelaporan bug, silakan kunjungi repositori Github yang telah disediakan.
+## License
+This application was created by Ramsyan Tungga Kiansantang and is licensed under the [GPL v3 License](https://www.gnu.org/licenses/gpl-3.0.html). For contributions or bug reporting, please visit the provided Github repository.
 
-## Versi
-- **Versi**: V1.5.3
-- **Tanggal Rilis**: 21 Agustus 2024
+## Version
+- **Version**: V1.5.3
+- **Release Date**: August 21, 2024
 
 ---
 
-## Kesimpulan
-`SuperNano` adalah editor teks berbasis konsol yang dirancang untuk memudahkan pengelolaan file dan direktori secara langsung dari command line. Aplikasi ini menawarkan alat yang kuat untuk pengguna yang bekerja di lingkungan berbasis teks.
+## Conclusion
+`SuperNano` is a console-based text editor designed to make it easy to manage files and directories directly from the command line. It offers powerful tools for users working in a text-based environment.
 
-Jika ada pertanyaan atau butuh bantuan lebih lanjut terkait implementasi, jangan ragu untuk menghubungi pengembang atau melihat dokumentasi tambahan yang mungkin tersedia.
+If you have any questions or need further assistance with the implementation, feel free to contact the developer or check out any additional documentation that may be available. [Email Support](mailto:alfiandecker2@gmail.com,ramstungga2@gmail.com)
 
