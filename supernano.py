@@ -520,18 +520,26 @@ class SuperNano:
     @complex_handle_errors(loggering=logging, nomessagesNormal=False)
     def get_file_list(self):
         "Mengambil daftar file dan direktori di path saat ini, termasuk opsi untuk naik satu level di direktori jika bukan di direktori root."
+
         files = []
+
         if self.current_path != ".":  # Cek apakah bukan di direktori root
             button = PlainButton("...")
+
             urwid.connect_signal(button, "click", self.go_up_directory)
+
             files.append(urwid.AttrMap(button, None, focus_map="reversed"))
 
-        for f in os.listdir(self.current_path):
-            if os.path.isdir(os.path.join(self.current_path, f)):
+        for f in os.listdir(f"{self.current_path}"):
+            if os.path.isdir(resolve_relative_path(self.current_path, f)):
                 f = f + "/"
+
             button = PlainButton(f)
+
             urwid.connect_signal(button, "click", self.open_file, f)
+
             files.append(urwid.AttrMap(button, None, focus_map="reversed"))
+
         return files
 
     def handle_input(self, key):
