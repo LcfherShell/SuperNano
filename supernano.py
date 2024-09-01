@@ -2,34 +2,22 @@ import urwid
 import pyperclip
 import os, sys, shutil, logging, time, threading, argparse
 from datetime import datetime
+
 try:
-    from libs.titlecommand import get_console_title, set_console_title
-    from libs.cmd_filter import shorten_path, validate_folder
-    from libs.errrorHandler import complex_handle_errors
-    from libs.system_manajemen import set_low_priority, SafeProcessExecutor
-    from libs.timeout import timeout_v2, timeout_v1
-    from libs.filemanager import (
-            StreamFile,
-            validate_file,
-            create_file_or_folder,
-            resolve_relative_path_v2,
-            all_system_paths,
+    from .titlecommand import get_console_title, set_console_title
+    from .cmd_filter import shorten_path, validate_folder
+    from .errrorHandler import complex_handle_errors
+    from .system_manajemen import set_low_priority, SafeProcessExecutor
+    from .timeout import timeout_v2, timeout_v1
+    from .filemanager import (
+        StreamFile,
+        ModuleInspector,
+        create_file_or_folder,
+        resolve_relative_path_v2,
+        all_system_paths,
     )
 except:
     try:
-        from .titlecommand import get_console_title, set_console_title
-        from .cmd_filter import shorten_path, validate_folder
-        from .errrorHandler import complex_handle_errors
-        from .system_manajemen import set_low_priority, SafeProcessExecutor
-        from .timeout import timeout_v2, timeout_v1
-        from .filemanager import (
-            StreamFile,
-            validate_file,
-            create_file_or_folder,
-            resolve_relative_path_v2,
-            all_system_paths,
-        )
-    except:
         from titlecommand import get_console_title, set_console_title
         from cmd_filter import shorten_path, validate_folder
         from errrorHandler import complex_handle_errors
@@ -37,12 +25,24 @@ except:
         from timeout import timeout_v2, timeout_v1
         from filemanager import (
             StreamFile,
-            validate_file,
+            ModuleInspector,
             create_file_or_folder,
             resolve_relative_path_v2,
             all_system_paths,
         )
-
+    except:
+        from libs.titlecommand import get_console_title, set_console_title
+        from libs.cmd_filter import shorten_path, validate_folder
+        from libs.errrorHandler import complex_handle_errors
+        from libs.system_manajemen import set_low_priority, SafeProcessExecutor
+        from libs.timeout import timeout_v2, timeout_v1
+        from libs.filemanager import (
+            StreamFile,
+            ModuleInspector,
+            create_file_or_folder,
+            resolve_relative_path_v2,
+            all_system_paths,
+        )
 
 
 set_low_priority(os.getpid())
@@ -63,11 +63,10 @@ for handler in logging.root.handlers[:]:
 
 logging.basicConfig(
     filename=fileloogiing,
-    filemode="w",
-    encoding=sys.getfilesystemencoding(),
+    filemode="a",
     format="%(asctime)s, %(msecs)d %(name)s %(levelname)s [ %(filename)s-%(module)s-%(lineno)d ]  : %(message)s",
     datefmt="%H:%M:%S",
-    level=logging.ERROR,
+    level=logging.DEBUG,
 )
 
 
@@ -106,15 +105,9 @@ def parse_args():
     parser = argparse.ArgumentParser(
         description="An extension on nano for editing directories in CLI."
     )
-    parser.add_argument(
-        "path",
-        default=os.path.split(thisfolder)[0],
-        nargs="?",
-        type=str,
-        help="Target file or directory to edit.",
-    )
-    args = parser.parse_args()
-    path = resolve_relative_path(args.path, "") or "."
+    parser.add_argument("path", help="Target file or directory to edit.")
+    args = vars(parser.parse_args())
+    path = args.get("path", ".").strip().replace("\\", "/")
     if os.path.exists(path):
         if validate_folder(path=path):
             pass
@@ -135,9 +128,30 @@ class PlainButton(urwid.Button):
     button_left = urwid.Text("")
     button_right = urwid.Text("")
 
-class SuperNano:
+
+class ClipboardTextBox(urwid.Edit):
+    def keypress(self, size, key):
+        if key == "ctrl c":
+            self.copy_to_clipboard()
+        elif key == "ctrl v":
+            self.paste_from_clipboard()
+        else:
+            return super().keypress(size, key)
+
+    def copy_to_clipboard(self):
+        self.clipboard = self.get_edit_text()
+
+    def paste_from_clipboard(self):
+        if hasattr(self, "clipboard"):
+            cursor_pos = self.edit_pos
+            text = self.get_edit_text()
+            self.set_edit_text(text[:cursor_pos] + self.clipboard + text[cursor_pos:])
+            self.edit_pos = cursor_pos + len(self.clipboard)
+
+
+class FileBrowserApp:
     """
-    Kelas SuperNano yang sedang Anda kembangkan adalah text editor berbasis TUI yang menggunakan Python versi 3.6 ke atas dan module python urwid[curses].
+    Kelas FileBrowserApp yang sedang Anda kembangkan adalah text editor berbasis console yang menggunakan Python 3.6 ke atas dengan dukungan urwid[curses].
     
     Pembuat: Ramsyan Tungga Kiansantang (ID)  |  Github: LcfherShell  
 
@@ -150,8 +164,10 @@ class SuperNano:
         "Mengatur path awal, judul aplikasi, widget, dan layout utama. Juga mengatur alarm untuk memuat menu utama dan memulai loop aplikasi."
         self.current_path = start_path
         self.current_file_name = None  # Track current file name
-        self.undo_stack, self.redo_stack = [[], []]  # Stack for undo  # Stack for redo
+        self.undo_stack = []  # Stack for undo
+        self.redo_stack = []  # Stack for redo
         self.overlay = None  # Overlay untuk popup
+        self.modulepython = ModuleInspector() #memuat module python
         
         # Set title
         setTitle("Win-SuperNano v{version}".format(version=__version__))
@@ -199,9 +215,6 @@ class SuperNano:
     def switch_to_secondary_layout(self):
         "Mengubah layout aplikasi ke menu utama yang telah disiapkan."
         self.setup_main_menu()
-        if self.loading_alarm != None:
-            self.loop.remove_alarm(self.loading_alarm)  # Hentikan alarm loading jika masih ada
-            self.loading_alarm = None
         self.loop.widget = self.main_layout
 
     @complex_handle_errors(loggering=logging)
@@ -293,7 +306,7 @@ class SuperNano:
             timeout_v2() + 1,
             lambda loop, user_data: self.system_usage(),
         )
-    
+
     @complex_handle_errors(loggering=logging)
     def setup_popup(self, options, title, descrip: str = ""):
         "Menyiapkan konten dan layout untuk menu popup dengan judul, deskripsi, dan opsi yang diberikan."
@@ -487,9 +500,7 @@ class SuperNano:
             else:
                 self.footer_text.set_text("Folder access denied!")
         else:
-            if validate_folder(os.path.dirname(file_path)) and validate_file(
-                file_path, os.path.getsize(file_path) or 20, 6
-            ):
+            if validate_folder(os.path.dirname(file_path)):
                 try:
                     with open(file_path, "r+", encoding=sys.getfilesystemencoding()) as f:
                         content = f.read()
@@ -647,9 +658,9 @@ class SuperNano:
         "Memulai loop utama urwid untuk menjalankan aplikasi."
         self.loop.run()
 
-@complex_handle_errors(loggering=logging)
+
 def main(path: str):
-    app = SuperNano(start_path=path)
+    app = FileBrowserApp(start_path=path)
     app.run()
 
 
