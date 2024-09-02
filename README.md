@@ -7,7 +7,7 @@ Here is the documentation for the `SuperNano` script, a powerful console-based t
 # SuperNano Documentation
 
 ## Description
-`SuperNano` is a console-based text editor developed using Python and the `urwid[curses]` library. It is designed to give users the ability to edit text, manage files, and inspect Python modules directly from a console-based interface. SuperNano supports several features such as undo-redo, clipboard (copy-paste), file search, and Python, C, NodeJS, and PHP module inspection.
+`SuperNano` is a console-based text editor developed using Python and the `urwid[curses]` library. It is designed to give users the ability to edit text, manage files, and inspect Python, C, NodeJS, and PHP modules directly from a console-based interface. SuperNano supports several features such as undo-redo, clipboard (copy-paste), file search, and Python, C, NodeJS, and PHP module inspection.
 
 ## Key Features
 - **Text Editing**: Text editor with multiline support, undo-redo, copy-paste, and file saving.
