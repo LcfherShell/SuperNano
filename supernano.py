@@ -782,10 +782,10 @@ class SuperNano:
                 self.main_layout.body.contents[2][0].set_title(file_name)
 
             else:
-                    if validate_folder(os.path.dirname(file_path)):
-                        self.current_file_name = file_name  # Track the current file name
+                if validate_folder(os.path.dirname(file_path)):
+                    self.current_file_name = file_name  # Track the current file name
 
-                    self.status_msg_footer_text.set_text("File access denied!")
+                self.status_msg_footer_text.set_text("File access denied!")
 
         if str(ext).lower().startswith((".pyx", ".pyz", ".py")) != True:
             self.Text_Deinspect_modules_from_package_Python.set_text(
