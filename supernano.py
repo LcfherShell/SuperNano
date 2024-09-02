@@ -12,9 +12,6 @@ try:
     from .filemanager import (
         StreamFile,
         ModuleInspector,
-        validate_file,
-        isvalidate_folder,
-        isvalidate_filename,
         create_file_or_folder,
         resolve_relative_path_v2,
         all_system_paths,
@@ -29,9 +26,6 @@ except:
         from filemanager import (
             StreamFile,
             ModuleInspector,
-            validate_file,
-            isvalidate_folder,
-            isvalidate_filename,
             create_file_or_folder,
             resolve_relative_path_v2,
             all_system_paths,
@@ -45,9 +39,6 @@ except:
         from libs.filemanager import (
             StreamFile,
             ModuleInspector,
-            validate_file,
-            isvalidate_folder,
-            isvalidate_filename,
             create_file_or_folder,
             resolve_relative_path_v2,
             all_system_paths,
@@ -158,20 +149,9 @@ class ClipboardTextBox(urwid.Edit):
             self.edit_pos = cursor_pos + len(self.clipboard)
 
 
-class SaveableEdit(urwid.Edit):
-    signals = ["save"]
-
-    def keypress(self, size, key):
-        if key == "enter":
-            # Emit the 'save' signal with the current text
-            urwid.emit_signal(self, "save", self.get_edit_text())
-            return True
-        return super().keypress(size, key)
-
-
-class SuperNano:
+class FileBrowserApp:
     """
-    Kelas SuperNano yang sedang Anda kembangkan adalah text editor berbasis console yang menggunakan Python 3.6 ke atas dengan dukungan urwid[curses].
+    Kelas FileBrowserApp yang sedang Anda kembangkan adalah text editor berbasis console yang menggunakan Python 3.6 ke atas dengan dukungan urwid[curses].
     
     Pembuat: Ramsyan Tungga Kiansantang (ID)  |  Github: LcfherShell  
 
@@ -212,7 +192,7 @@ class SuperNano:
         # Create footer and status text
         self.footer_text = urwid.Text("Press ctrl + q to exit, Arrow keys to navigate")
         self.status_text = urwid.Text(
-            "Ctrl+S : Save file    Ctrl+D : Delete File    Ctrl+Z : Undo Edit    Ctrl+Y : Redo Edit    Ctrl+E : Redirect input   Ctrl+N : Rename/Create  Ctrl+R : Refresh UI    ESC: Quit "
+            "Ctrl+S : Save file    Ctrl+D : Delete File    Ctrl+Z : Undo Edit    Ctrl+Y : Redo Edit    F1 : Redirects input to copy paste   Ctrl+R : Refresh UI    ESC: Quit "
         )
 
         # Event loop
@@ -408,12 +388,7 @@ class SuperNano:
                 title="Confirm Quit",
                 descrip="Are you sure you Quit",
             )
-        elif key in ("ctrl n", "ctrl N"):
-            self.show_popup(
-                menus=[*self.renameORcreatedPOP()],
-                title="Rename or Create",
-                descrip="AChoose to rename an existing item or create a new one in the current directory. Press ENter to done",
-            )
+
         elif key in ("ctrl s", "ctrl S"):
             # self.save_file()
             self.show_popup(
@@ -454,54 +429,7 @@ class SuperNano:
             self.switch_to_secondary_layout()
         elif key in ("f1", "ctrl e", "ctrl E"):
             self.current_focus = 1 if self.current_focus == 0 else 0
-    
-    @complex_handle_errors(loggering=logging)
-    def renameORcreatedPOP(self):
-        select = urwid.Edit("Search or Create", "")
-        replaces = SaveableEdit("Replace         ", "")
 
-        def on_save(button, *args):
-            slect = select.get_edit_text().strip()
-            if slect.__len__() <= 0:
-                return
-            getselect = [f for f in os.listdir(f"{self.current_path}") if slect in f]
-            if getselect and replaces.get_edit_text():
-                _y = replaces.get_edit_text().strip()
-                if isvalidate_folder(_y):
-                    try:
-                        selecfolder = resolve_relative_path(
-                            self.current_path, getselect[0]
-                        )
-                        selecrepcae = resolve_relative_path(self.current_path, _y)
-                        if os.path.isdir(selecfolder) or os.path.isfile(selecfolder):
-                            os.rename(selecfolder, selecrepcae)
-                        ms = str(f"Success renaming item")
-                    except:
-                        ms = str(f"Failed renaming item: {getselect[0]}")
-                else:
-                    ms = str("Item to rename not found")
-            else:
-                x, _y = os.path.split(slect)
-                if os.path.isdir(x):
-                    ms = str("Item to rename not found")
-                else:
-                    if isvalidate_folder(_y) or _y.find(".") == -1:
-                        ms = create_file_or_folder(
-                            resolve_relative_path(self.current_path, slect)
-                        )
-                    elif isvalidate_filename(_y) or _y.find(".") > 0:
-                        ms = create_file_or_folder(
-                            resolve_relative_path(self.current_path, slect)
-                        )
-                    else:
-                        ms = str("Item to rename not found")
-
-            self.switch_to_secondary_layout()
-            self.status_msg_footer_text.set_text(ms)
-
-        urwid.connect_signal(replaces, "save", on_save)
-        return [select, replaces]
-    
     @complex_handle_errors(loggering=logging)
     def get_current_edit(self):
         "Mengembalikan widget edit yang sedang difokuskan (text editor atau search edit)."
@@ -735,7 +663,7 @@ class SuperNano:
 
 
 def main(path: str):
-    app = SuperNano(start_path=path)
+    app = FileBrowserApp(start_path=path)
     app.run()
 
 
