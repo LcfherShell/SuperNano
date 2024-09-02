@@ -301,6 +301,147 @@ def create_file_or_folder(path: str) -> str:
         return "Something happened."
 
 
+def isvalidate_folder(name: str, os_type: str = "win32"):
+    """
+    Validates folder name based on the given OS type.
+
+    Args:
+        name (str): Name of the folder to validate.
+        os_type (str): Type of the OS ('windows', 'mac', or 'linux').
+
+    Returns:
+        bool: True if the name is valid, False otherwise.
+    """
+
+    # Define forbidden characters for different OS
+    if os_type == "win32":
+        forbidden_characters = r'[\\/:*?"<>|]'
+        forbidden_endings = [" ", "."]
+    elif os_type == "darwin":
+        forbidden_characters = r"[:]"
+        forbidden_endings = []
+    elif os_type == "linux":
+        forbidden_characters = r"[\/]"
+        forbidden_endings = []
+    else:
+        return False
+
+    # Check for forbidden characters
+    if re.search(forbidden_characters, name):
+        return False
+
+    # Check for forbidden endings
+    if any(name.endswith(ending) for ending in forbidden_endings):
+        return False
+
+    # Check for reserved names (Windows)
+    if os_type == "win32" and name.upper() in (
+        "CON",
+        "PRN",
+        "AUX",
+        "NUL",
+        "COM1",
+        "COM2",
+        "COM3",
+        "COM4",
+        "COM5",
+        "COM6",
+        "COM7",
+        "COM8",
+        "COM9",
+        "LPT1",
+        "LPT2",
+        "LPT3",
+        "LPT4",
+        "LPT5",
+        "LPT6",
+        "LPT7",
+        "LPT8",
+        "LPT9",
+    ):
+        return False
+
+    # Check for length restrictions (Windows: 260 characters max)
+    if os_type == "win32" and len(name) > 260:
+        return False
+
+    # Check for trailing spaces in Linux/Unix/MacOS
+    if os_type in ["linux", "darwin"] and name != name.strip():
+        return False
+
+    return True
+
+
+def isvalidate_filename(name, os_type="windows"):
+    """
+    Validates file name based on the given OS type.
+
+    Args:
+        name (str): Name of the file to validate.
+        os_type (str): Type of the OS ('windows', 'mac', or 'linux').
+
+    Returns:
+        bool: True if the name is valid, False otherwise.
+    """
+
+    # Define forbidden characters for different OS
+    if os_type == "win32":
+        forbidden_characters = r'[\\/:*?"<>|]'
+        forbidden_endings = ["."]
+        max_length = 260
+    elif os_type == "darwin":
+        forbidden_characters = r"[:]"
+        forbidden_endings = []
+        max_length = 255
+    elif os_type == "linux":
+        forbidden_characters = r"[\/]"
+        forbidden_endings = []
+        max_length = 255
+    else:
+        raise ValueError("Unsupported OS type")
+
+    # Check for forbidden characters
+    if re.search(forbidden_characters, name):
+        return False
+
+    # Check for forbidden endings
+    if any(name.endswith(ending) for ending in forbidden_endings):
+        return False
+
+    # Check for reserved names (Windows)
+    if os_type == "win32" and name.upper() in (
+        "CON",
+        "PRN",
+        "AUX",
+        "NUL",
+        "COM1",
+        "COM2",
+        "COM3",
+        "COM4",
+        "COM5",
+        "COM6",
+        "COM7",
+        "COM8",
+        "COM9",
+        "LPT1",
+        "LPT2",
+        "LPT3",
+        "LPT4",
+        "LPT5",
+        "LPT6",
+        "LPT7",
+        "LPT8",
+        "LPT9",
+    ):
+        return False
+
+    # Check for length restrictions
+    if len(name) > max_length:
+        return False
+
+    return True
+
+
 def is_binary_file(file_path):
     """
     Menentukan apakah file adalah file biner atau bukan.
