@@ -8,7 +8,7 @@ from datetime import datetime
 
 
 try:
-    from libs.helperegex import findpositions
+    from libs.helperegex import findpositions, rreplace
 
     from libs.titlecommand import get_console_title, set_console_title
 
@@ -25,6 +25,8 @@ try:
         ModuleInspector,
         read_file_in_chunks,
         validate_file,
+        isvalidate_folder,
+        isvalidate_filename,
         create_file_or_folder,
         resolve_relative_path_v2,
         resolve_relative_path,
@@ -33,7 +35,7 @@ try:
 
 except:
     try:
-        from .helperegex import findpositions
+        from .helperegex import findpositions, rreplace
 
         from .titlecommand import get_console_title, set_console_title
 
@@ -50,6 +52,8 @@ except:
             ModuleInspector,
             read_file_in_chunks,
             validate_file,
+            isvalidate_folder,
+            isvalidate_filename,
             create_file_or_folder,
             resolve_relative_path_v2,
             resolve_relative_path,
@@ -57,7 +61,7 @@ except:
         )
 
     except:
-        from helperegex import findpositions
+        from helperegex import findpositions, rreplace
 
         from titlecommand import get_console_title, set_console_title
 
@@ -74,6 +78,8 @@ except:
             ModuleInspector,
             read_file_in_chunks,
             validate_file,
+            isvalidate_folder,
+            isvalidate_filename,
             create_file_or_folder,
             resolve_relative_path_v2,
             resolve_relative_path,
@@ -325,6 +331,17 @@ class NumberedEdit(urwid.WidgetWrap):
         """Get the text from the edit widget."""
 
         return self.edit.get_edit_text()
+
+
+class SaveableEdit(urwid.Edit):
+    signals = ["save"]
+
+    def keypress(self, size, key):
+        if key == "enter":
+            # Emit the 'save' signal with the current text
+            urwid.emit_signal(self, "save", self.get_edit_text())
+            return True
+        return super().keypress(size, key)
 
 
 urwid.register_signal(NumberedEdit, ["change"])
@@ -606,7 +623,6 @@ class SuperNano:
             timeout_v2() + 1,
             lambda loop, user_data: self.system_usage(),
         )
-
         try:
             urwid.TrustedLoop(self.loop).set_widget(self.main_layout)
         except:
@@ -769,6 +785,53 @@ class SuperNano:
 
         return files
 
+    @complex_handle_errors(loggering=logging, nomessagesNormal=False)
+    def renameORcreatedPOP(self):
+        select = urwid.Edit("Search or Create", "")
+        replaces = SaveableEdit("Replace         ", "")
+
+        def on_save(button, *args):
+            slect = select.get_edit_text().strip()
+            if slect.__len__() <= 0:
+                return
+            getselect = [f for f in os.listdir(f"{self.current_path}") if slect in f]
+            if getselect and replaces.get_edit_text():
+                _y = replaces.get_edit_text().strip()
+                if isvalidate_folder(_y):
+                    try:
+                        selecfolder = resolve_relative_path(
+                            self.current_path, getselect[0]
+                        )
+                        selecrepcae = resolve_relative_path(self.current_path, _y)
+                        if os.path.isdir(selecfolder) or os.path.isfile(selecfolder):
+                            os.rename(selecfolder, selecrepcae)
+                        ms = str(f"Success renaming item")
+                    except:
+                        ms = str(f"Failed renaming item: {getselect[0]}")
+                else:
+                    ms = str("Item to rename not found")
+            else:
+                x, _y = os.path.split(slect)
+                if os.path.isdir(x):
+                    ms = str("Item to rename not found")
+                else:
+                    if isvalidate_folder(_y) or _y.find(".") == -1:
+                        ms = create_file_or_folder(
+                            resolve_relative_path(self.current_path, slect)
+                        )
+                    elif isvalidate_filename(_y) or _y.find(".") > 0:
+                        ms = create_file_or_folder(
+                            resolve_relative_path(self.current_path, slect)
+                        )
+                    else:
+                        ms = str("Item to rename not found")
+
+            self.switch_to_secondary_layout()
+            self.status_msg_footer_text.set_text(ms)
+
+        urwid.connect_signal(replaces, "save", on_save)
+        return [select, replaces]
+
     def handle_input(self, key):
         "Menangani input keyboard dari pengguna untuk berbagai tindakan seperti keluar, menyimpan, menghapus, undo, redo, copy, paste, dan refresh UI."
 
@@ -777,6 +840,13 @@ class SuperNano:
                 menus=[PlainButton("OK", on_press=lambda _x: self.quit_app())],
                 title="Confirm Quit",
                 descrip="Are you sure you Quit",
+            )
+
+        elif key in ("ctrl n", "ctrl N"):
+            self.show_popup(
+                menus=[*self.renameORcreatedPOP()],
+                title="Rename or Create",
+                descrip="AChoose to rename an existing item or create a new one in the current directory. Press ENter to done",
             )
 
         elif key in ("ctrl s", "ctrl S"):
@@ -1150,7 +1220,18 @@ class SuperNano:
                     if self.current_path.replace("\\", "/") == x.replace(
                         "\\", "/"
                     ) and os.path.isdir(x):
-                        search_query = str(create_file_or_folder(search_query))
+                        if _y.endswith(("/", "\\")) or _y.find(".") == -1:
+                            _y = rreplace(_y, "/", "", 1)
+                            _y = rreplace(_y, "\\", "", 1)
+                            if isvalidate_folder(_y):
+                                search_query = str(create_file_or_folder(search_query))
+                            else:
+                                search_query = "{search_query} is Failed"
+                        else:
+                            if isvalidate_filename(_y):
+                                search_query = str(create_file_or_folder(search_query))
+                            else:
+                                search_query = "{search_query} is Failed"
 
                         self.update_ui()
 
@@ -1238,20 +1319,32 @@ class SuperNano:
                                         os.path.join(self.current_path, getREName[0]),
                                         os.path.join(self.current_path, x[1]),
                                     ]
+                                    _y, _xs = os.path.split(newplace)
+                                    if _xs:
+                                        if (
+                                            _xs.endswith("/", "\\")
+                                            or _xs.find(".") == -1
+                                        ):
+                                            _y = rreplace(_xs, "/", "", 1)
+                                            _y = rreplace(_xs, "\\", "", 1)
+                                            if not isvalidate_folder(_xs):
+                                                return
+                                        else:
+                                            if not isvalidate_filename(_xs):
+                                                return
+                                        try:
+                                            os.rename(oldfilesorfolder, newplace)
 
-                                    try:
-                                        os.rename(oldfilesorfolder, newplace)
+                                            self.status_msg_footer_text.set_text(
+                                                f"Rename {getREName[0]} success"
+                                            )
 
-                                        self.status_msg_footer_text.set_text(
-                                            f"Rename {getREName[0]} success"
-                                        )
+                                            self.update_ui()
 
-                                        self.update_ui()
+                                            self.file_list[:] = self.get_file_list()
 
-                                        self.file_list[:] = self.get_file_list()
-
-                                    except:
-                                        pass
+                                        except:
+                                            pass
 
                         else:
                             self.status_msg_footer_text.set_text(
