@@ -1,4 +1,5 @@
 import os, sys, time, shutil, psutil, inspect, importlib, pkg_resources, pkgutil, json, logging, threading, re
+from functools import partial
 
 try:
     from .helperegex import (
@@ -54,18 +55,18 @@ if __name__ == "__main__":
     set_low_priority(os.getpid())
 
 
-
-def removeduplicatejson(my_list:list):
+def removeduplicatejson(my_list: list):
     # Menggunakan dictionary untuk melacak elemen unik
     seen = {}
     for d in my_list:
-        key = (d["name"])  # Kunci unik berdasarkan 'name' dan 'age'
+        key = d["name"]  # Kunci unik berdasarkan 'name' dan 'age'
         if key not in seen:
             seen[key] = d
 
     # Mengambil nilai dari dictionary
     unique_list = list(seen.values())
     return list(unique_list)
+
 
 script_dir = os.path.dirname(os.path.realpath(__file__)).replace("\\", "/")
 all_system_paths = ["/".join(script_dir.split("/")[:-1]), script_dir]
@@ -153,7 +154,6 @@ class StreamFile:
 
 class ModuleInspector:
     def __init__(self):
-        
         self.languages = {"languages": "PYTHON"}
         self.modules = self.getsys_module()
         self.curents = self.modules
@@ -196,7 +196,13 @@ class ModuleInspector:
     def subprocess(self, filescript: str, file_path: str):
         try:
             result = subprocess.run(
-                ["node", resolve_relative_path(all_system_paths[1], filescript), file_path], capture_output=True, text=True
+                [
+                    "node",
+                    resolve_relative_path(all_system_paths[1], filescript),
+                    file_path,
+                ],
+                capture_output=True,
+                text=True,
             )
 
             if result.returncode == 0:
@@ -216,7 +222,7 @@ class ModuleInspector:
 
         # Mengambil semua modul di direktori
         try:
-            self.languages["languages"] = "NODEJS" 
+            self.languages["languages"] = "NODEJS"
             return [
                 module
                 for module in os.listdir(node_modules_path)
@@ -266,7 +272,7 @@ class ModuleInspector:
 
     ########################Python module
     def getsys_module(self):
-        self.languages["languages"] = "PYTHON" 
+        self.languages["languages"] = "PYTHON"
         return (
             sorted(
                 [
@@ -411,7 +417,7 @@ class ModuleInspector:
                     ):
                         modules = [x for x in index_file_path.split(directory) if x]
                         php_files.append(modules[0])
-        self.languages["languages"] = "PHP" 
+        self.languages["languages"] = "PHP"
         return php_files or None
 
     def inspect_php_module(self, file_path: str):
@@ -443,7 +449,7 @@ class ModuleInspector:
                     ):
                         modules = [x for x in index_file_path.split(directory) if x]
                         c_files.append(modules[0])
-        self.languages["languages"] = "C" 
+        self.languages["languages"] = "C"
         return c_files or None
 
     def inspect_c_module(self, file_path: str):
@@ -598,7 +604,8 @@ class ModuleInspector:
                     )
             except:
                 struct_pattern = re.compile(
-                    r"\btypedef\s+struct\s+(\w+)\s*\{([^}]*)\}\s*;", re.MULTILINE | re.DOTALL
+                    r"\btypedef\s+struct\s+(\w+)\s*\{([^}]*)\}\s*;",
+                    re.MULTILINE | re.DOTALL,
                 )
                 field_pattern = re.compile(
                     r"([a-zA-Z_][a-zA-Z_0-9]*)\s+([a-zA-Z_][a-zA-Z_0-9]*)\s*(?:\[\s*\d*\s*\])?\s*(?:;|,)",
@@ -657,7 +664,7 @@ class ModuleInspector:
         if self.modulepathnow.__len__() >= 1:
             sys.path.extend(self.modulepathnow)
         _, ext = os.path.splitext(module_name)
-        if ext.__len__()==0:
+        if ext.__len__() == 0:
             node_modules_path = os.path.join(
                 os.getenv("APPDATA") or "/usr/local", "npm", "node_modules"
             )
@@ -668,16 +675,20 @@ class ModuleInspector:
                 inspectModule = self.inspect_python_module(module_name)
         else:
             if module_name.startswith("\\"):
-                module_name = module_name.replace("\\", "",1)
+                module_name = module_name.replace("\\", "", 1)
             elif module_name.startswith("/"):
-                module_name = module_name.replace("/", "",1)
+                module_name = module_name.replace("/", "", 1)
             if ext.lower() in (".php", ".phpx"):
                 inspectModule = self.inspect_php_module(
-                    resolve_relative_path(os.path.join(*self.modulepathnow), module_name)
+                    resolve_relative_path(
+                        os.path.join(*self.modulepathnow), module_name
+                    )
                 )
             elif ext.lower() in (".c", ".cpp", "csx", ".h"):
                 inspectModule = self.inspect_c_module(
-                    resolve_relative_path(os.path.join(*self.modulepathnow), module_name)
+                    resolve_relative_path(
+                        os.path.join(*self.modulepathnow), module_name
+                    )
                 )
         return inspectModule
 
@@ -728,6 +739,147 @@ def create_file_or_folder(path: str) -> str:
         return "Something happened."
 
 
+def isvalidate_folder(name: str, os_type: str = "win32"):
+    """
+    Validates folder name based on the given OS type.
+
+    Args:
+        name (str): Name of the folder to validate.
+        os_type (str): Type of the OS ('windows', 'mac', or 'linux').
+
+    Returns:
+        bool: True if the name is valid, False otherwise.
+    """
+
+    # Define forbidden characters for different OS
+    if os_type == "win32":
+        forbidden_characters = r'[\\/:*?"<>|]'
+        forbidden_endings = [" ", "."]
+    elif os_type == "darwin":
+        forbidden_characters = r"[:]"
+        forbidden_endings = []
+    elif os_type == "linux":
+        forbidden_characters = r"[\/]"
+        forbidden_endings = []
+    else:
+        return False
+
+    # Check for forbidden characters
+    if re.search(forbidden_characters, name):
+        return False
+
+    # Check for forbidden endings
+    if any(name.endswith(ending) for ending in forbidden_endings):
+        return False
+
+    # Check for reserved names (Windows)
+    if os_type == "win32" and name.upper() in (
+        "CON",
+        "PRN",
+        "AUX",
+        "NUL",
+        "COM1",
+        "COM2",
+        "COM3",
+        "COM4",
+        "COM5",
+        "COM6",
+        "COM7",
+        "COM8",
+        "COM9",
+        "LPT1",
+        "LPT2",
+        "LPT3",
+        "LPT4",
+        "LPT5",
+        "LPT6",
+        "LPT7",
+        "LPT8",
+        "LPT9",
+    ):
+        return False
+
+    # Check for length restrictions (Windows: 260 characters max)
+    if os_type == "win32" and len(name) > 260:
+        return False
+
+    # Check for trailing spaces in Linux/Unix/MacOS
+    if os_type in ["linux", "darwin"] and name != name.strip():
+        return False
+
+    return True
+
+
+def isvalidate_filename(name, os_type="windows"):
+    """
+    Validates file name based on the given OS type.
+
+    Args:
+        name (str): Name of the file to validate.
+        os_type (str): Type of the OS ('windows', 'mac', or 'linux').
+
+    Returns:
+        bool: True if the name is valid, False otherwise.
+    """
+
+    # Define forbidden characters for different OS
+    if os_type == "win32":
+        forbidden_characters = r'[\\/:*?"<>|]'
+        forbidden_endings = ["."]
+        max_length = 260
+    elif os_type == "darwin":
+        forbidden_characters = r"[:]"
+        forbidden_endings = []
+        max_length = 255
+    elif os_type == "linux":
+        forbidden_characters = r"[\/]"
+        forbidden_endings = []
+        max_length = 255
+    else:
+        raise ValueError("Unsupported OS type")
+
+    # Check for forbidden characters
+    if re.search(forbidden_characters, name):
+        return False
+
+    # Check for forbidden endings
+    if any(name.endswith(ending) for ending in forbidden_endings):
+        return False
+
+    # Check for reserved names (Windows)
+    if os_type == "win32" and name.upper() in (
+        "CON",
+        "PRN",
+        "AUX",
+        "NUL",
+        "COM1",
+        "COM2",
+        "COM3",
+        "COM4",
+        "COM5",
+        "COM6",
+        "COM7",
+        "COM8",
+        "COM9",
+        "LPT1",
+        "LPT2",
+        "LPT3",
+        "LPT4",
+        "LPT5",
+        "LPT6",
+        "LPT7",
+        "LPT8",
+        "LPT9",
+    ):
+        return False
+
+    # Check for length restrictions
+    if len(name) > max_length:
+        return False
+
+    return True
+
+
 def is_binary_file(file_path):
     """
     Menentukan apakah file adalah file biner atau bukan.
@@ -739,7 +891,7 @@ def is_binary_file(file_path):
         bool: True jika file adalah file biner, False jika bukan.
     """
     try:
-        with open(file_path, "rb") as file:
+        with open(file_path, "rb+") as file:
             chunk = file.read(1024)  # Membaca bagian pertama file (1KB)
             # Cek apakah file memiliki karakter yang tidak biasa untuk teks
             if b"\0" in chunk:  # Null byte adalah indikator umum dari file biner
@@ -754,6 +906,33 @@ def is_binary_file(file_path):
         return False
     except Exception as e:
         return False
+
+
+def read_file_in_chunks(file_path: str, buffer_size: int = -1):
+    """
+    Membaca file secara bertahap menggunakan iter dan functools.partial.
+
+    :param file_path: Path dari file yang ingin dibaca.
+    :param buffer_size: Ukuran buffer dalam byte (default -1 bytes).
+    :return: Isi file dalam bentuk string.
+    """
+    output: str = ""
+    if buffer_size < 1:
+        buffer_size: int = os.path.getsize(file_path)
+    if not is_binary_file(file_path):
+        stream = StreamFile(file_path, os.path.getsize(file_path), 0.01)
+        output = "\n".join([x for x in stream.readlines()])
+        return output
+    try:
+        with open(file_path, "rb") as file:  # Membuka file binari dalam mode biner
+            # Menggunakan iter untuk membaca file dengan buffer
+            for chunk in iter(partial(file.read, buffer_size), b""):
+                # Proses data di sini (misalnya, cetak atau simpan ke tempat lain)
+                output += str(f"\n{chunk}")  # Menampilkan isi chunk
+    except Exception as e:
+        pass
+    return output
+
 
 def validate_file(file_path, max_size_mb=100, max_read_time=2):
     try:
