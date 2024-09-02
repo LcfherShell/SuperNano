@@ -1,4 +1,4 @@
-import os, sys, time, shutil, psutil, inspect, importlib, pkg_resources, pkgutil, json, logging, threading
+import os, sys, time, shutil, psutil, inspect, importlib, pkg_resources, pkgutil, json, logging, threading, re
 
 try:
     from .helperegex import (
