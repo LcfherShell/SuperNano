@@ -16,7 +16,7 @@ try:
         isvalidate_folder,
         isvalidate_filename,
         create_file_or_folder,
-        resolve_relative_path_v2,
+        resolve_relative_path_v2, resolve_relative_path,
         all_system_paths,
     )
 except:
@@ -33,7 +33,7 @@ except:
             isvalidate_folder,
             isvalidate_filename,
             create_file_or_folder,
-            resolve_relative_path_v2,
+            resolve_relative_path_v2, resolve_relative_path,
             all_system_paths,
         )
     except:
@@ -49,7 +49,7 @@ except:
             isvalidate_folder,
             isvalidate_filename,
             create_file_or_folder,
-            resolve_relative_path_v2,
+            resolve_relative_path_v2, resolve_relative_path,
             all_system_paths,
         )
 
@@ -457,6 +457,7 @@ class SuperNano:
     
     @complex_handle_errors(loggering=logging)
     def renameORcreatedPOP(self):
+        "Menyiapkan konten dan layout untuk menu popup rename dan created"
         select = urwid.Edit("Search or Create", "")
         replaces = SaveableEdit("Replace         ", "")
 
@@ -497,7 +498,7 @@ class SuperNano:
                         ms = str("Item to rename not found")
 
             self.switch_to_secondary_layout()
-            self.status_msg_footer_text.set_text(ms)
+            self.footer_text.set_text(ms)
 
         urwid.connect_signal(replaces, "save", on_save)
         return [select, replaces]
