@@ -12,7 +12,7 @@ Here is the documentation for the `SuperNano` script, a powerful console-based t
 ## Key Features
 - **Text Editing**: Text editor with multiline support, undo-redo, copy-paste, and file saving.
 - **File Management**: Allows directory navigation, opening and saving files, and creating and deleting files.
-- Module Inspection**: Features for inspecting Python modules, displaying information about global variables, classes, and functions within the module.
+- **Module Inspection**: Features for inspecting Python modules, displaying information about global variables, classes, and functions within the module.
 
 
 ## Classes and Methods
