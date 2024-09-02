@@ -6,7 +6,7 @@ Here is the file for the `SuperNano` script, which serves to download the supern
 
 ---
 
-##If desired, see the version (branch) and documentation available::
+## If desired, see the version (branch) and documentation available::
 - https://github.com/LcfherShell/SuperNano/branches
 
 ## How to run?
