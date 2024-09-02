@@ -455,7 +455,7 @@ class SuperNano:
         elif key in ("f1", "ctrl e", "ctrl E"):
             self.current_focus = 1 if self.current_focus == 0 else 0
     
-    @complex_handle_errors(loggering=logging, nomessagesNormal=False)
+    @complex_handle_errors(loggering=logging)
     def renameORcreatedPOP(self):
         select = urwid.Edit("Search or Create", "")
         replaces = SaveableEdit("Replace         ", "")
