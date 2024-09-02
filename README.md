@@ -9,10 +9,10 @@ Here is the file for the `SuperNano` script, which serves to download the supern
 ##If desired, see the version (branch) and documentation available::
 - https://github.com/LcfherShell/SuperNano/branches
 
-##How to run?
+## How to run?
 ```
 python main.py
 ```
 
-##Read also the applicable licenses 
+## Read also the applicable licenses 
 [Lisensi GPL v3](https://github.com/LcfherShell/SuperNano/blob/V2.1.0/GPL-3.0.txt)
