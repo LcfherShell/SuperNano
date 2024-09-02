@@ -12,7 +12,7 @@ Here is the documentation for the `SuperNano` script, a powerful console-based t
 ## Key Features
 - **Text Editing**: Text editor with multiline support, undo-redo, copy-paste, and file saving.
 - **File Management**: Allows directory navigation, opening and saving files, and creating and deleting files.
-- Module Inspection**: Features for inspecting Python, C, NodeJS, and PHP modules, displaying information about global variables, classes, and functions within the module.
+- **Module Inspection**: Features for inspecting Python, C, NodeJS, and PHP modules, displaying information about global variables, classes, and functions within the module.
 
 
 
@@ -61,10 +61,12 @@ This class is responsible for loading and inspecting Python, C, NodeJS, and PHP 
 1. **Run Application**: Run the `SuperNano` script with Python 3.6 and above in your terminal.
 2. **Navigate Files**: Use the up and down arrows to select files in the directory. Press Enter to open the file.
 3. **Edit Text**: Once the file is open, the text can be edited directly in the editor. Use `Ctrl+S` to save changes.
-4. **Undo-Redo**: Use `Ctrl+Z` to undo and `Ctrl+Y` to redo.
-5. **Copy-Paste**: Use `Ctrl+C` to copy and `Ctrl+V` to paste.
-6. **Inspect Module**: Select a module from the list available in the UI to display information about the module.
-7. **Exit Application**: Press `Ctrl+Q` or `ESC` to exit the application.
+4. **Rename/Create**: Press `Ctrl+N` to rename or create a file or folder.
+5. **Undo-Redo**: Use `Ctrl+Z` to undo and `Ctrl+Y` to redo.
+6. **Copy-Paste**: Use `Ctrl+C` to copy and `Ctrl+V` to paste.
+7. **Refresh TUI**: Press `Ctrl+R` to refresh TUI.
+8. **Inspect Module**: Select a module from the list available in the UI to display information about the module.
+9. **Exit Application**: Press `Ctrl+Q` or `ESC` to exit the application.
 
 
 ## Requirements
