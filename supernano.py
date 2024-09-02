@@ -590,7 +590,10 @@ class SuperNano:
                 self.current_file_name = file_name  # Track the current file name
                 self.main_layout.body.contents[1][0].set_title(file_name)
             else:
-                self.footer_text.set_text("File access denied!")
+                if validate_folder(os.path.dirname(file_path)):
+                    self.current_file_name = file_name  # Track the current file name
+
+                self.status_msg_footer_text.set_text("File access denied!")
 
     @complex_handle_errors(loggering=logging)
     def save_file(self):
