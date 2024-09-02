@@ -323,7 +323,7 @@ class SuperNano:
             "Press ctrl + q to exit, Arrow keys to navigate"
         )
         self.main_footer_text = urwid.Text(
-            "Ctrl+S : Save file    Ctrl+D : Delete File    Ctrl+Z : Undo Edit    Ctrl+Y : Redo Edit    Ctrl+E : Redirect input   Ctrl+R : Refresh UI    ESC: Quit "
+            "Ctrl+S : Save file    Ctrl+D : Delete File    Ctrl+Z : Undo Edit    Ctrl+Y : Redo Edit    Ctrl+E : Redirect input   Ctrl+N : Rename/Create  Ctrl+R : Refresh UI    ESC: Quit "
         )
 
         # Event loop
