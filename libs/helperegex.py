@@ -206,7 +206,24 @@ def searching(patternRegex, data: str):
         return match.group(1)
     else:
         return None
-
+        
+def split_from_right_with_regex(text, pattern, maxsplit:int=-1):
+    # Menggunakan re.split() untuk membagi string
+    try:
+        parts = re.split(pattern, text)
+        # Jika maxsplit diatur, batasi jumlah split dari kanan
+        if maxsplit > 0:
+            # Membalikkan hasil split untuk memproses dari kanan ke kiri
+            parts.reverse()
+            # Batasi split dan balikkan kembali
+            limited_parts = parts[:maxsplit+1]
+            limited_parts.reverse()
+            return limited_parts
+        else:
+            return parts
+    except:
+        return text.rsplit(pattern, maxsplit=maxsplit)
+        
 ####menemkan karakter diluar  tanda kutipp
 def count_character_outside_quotes(input_string, character):
     """
