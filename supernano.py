@@ -273,7 +273,7 @@ class SuperNano:
         ######Create widgets modulepython menu
         def create_button(module_name):
             button = PlainButton(module_name)
-            urwid.connect_signal(button, "click", self.inspect_module, module_name)
+            urwid.connect_signal(button, "click", self.inspect_module, user_args=[module_name])
             return urwid.AttrMap(button, None, focus_map="reversed")
 
         self.listmodules_from_package_Python = urwid.SimpleFocusListWalker(
@@ -466,7 +466,7 @@ class SuperNano:
     def create_modules_menus(self, listmodulename: list):
         def create_button(module_name):
             button = PlainButton(module_name)
-            urwid.connect_signal(button, "click", self.inspect_module, module_name)
+            urwid.connect_signal(button, "click", self.inspect_module, user_args=[module_name])
             return urwid.AttrMap(button, None, focus_map="reversed")
 
         return [create_button(module) for module in listmodulename]
