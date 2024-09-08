@@ -220,6 +220,10 @@ def setupyinstaller(data: list):
             d = d.split("=", 1)[0]
             if d.startswith("windows-curses"):
                 d = d.replace("windows-curses", "curses")
+            elif d.startswith("py-cui"):
+                d = d.replace("py-cui", "py_cui")
+            elif d.find("-")!=-1:
+                d = d.replace("-", "_")
             xdata.append(d)
         xdata.extend(["requests", "re", "shutil"])
         return "--hidden-import={hidden_p}".format(
