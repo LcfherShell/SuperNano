@@ -2,7 +2,8 @@ import urwid
 import pyperclip
 import os, sys, shutil, logging, time, threading, argparse
 from datetime import datetime
-
+if getattr(sys, 'frozen', False):
+    __file__ = sys.executable
 try:
     from .titlecommand import get_console_title, set_console_title
     from .cmd_filter import shorten_path, validate_folder
