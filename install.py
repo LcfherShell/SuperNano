@@ -186,33 +186,42 @@ def loadinitmodule():
 
 
 def rename(paths: str):
+    """
+    Mencari file .exe terbaru di folder yang diberikan, lalu mengubah namanya menjadi "supernano.exe" jika belum bernama demikian.
+    """
     listApps, allmodifed = [[], []]
-    for path in tuple(os.listdir(paths)):
+    for path in tuple(os.listdir(paths)):  # Memeriksa semua file di folder yang diberikan
         locationApp = os.path.join(paths, path)
-        if os.path.isfile(locationApp) and path.endswith((".exe", "exe")):
-            listApps.append((locationApp, round(os.path.getctime(locationApp))))
+        if os.path.isfile(locationApp) and path.endswith((".exe", "exe")):  # Filter file .exe
+            listApps.append((locationApp, round(os.path.getctime(locationApp))))  # Simpan lokasi dan waktu modifikasi file .exe
+
     try:
         for app in listApps:
-            allmodifed.append(app[1])
-        locationApp = listApps[allmodifed.index(max(allmodifed))][0]
-        file_name, ext = list(os.path.splitext(os.path.basename(locationApp)))
-        if str(file_name).lower() == "supernano":
+            allmodifed.append(app[1])  # Mengumpulkan waktu modifikasi semua file .exe
+        locationApp = listApps[allmodifed.index(max(allmodifed))][0]  # Temukan file .exe terbaru
+        file_name, ext = list(os.path.splitext(os.path.basename(locationApp)))  # Pisahkan nama file dan ekstensi
+        if str(file_name).lower() == "supernano":  # Jika file sudah bernama 'supernano', kembalikan True
             return True
         newfile_name = "{files}{ext}".format(
             files=str(file_name).replace(str(file_name), "supernano"), ext=ext
-        )
+        )  # Ganti nama file menjadi 'supernano'
         dirnames = os.path.dirname(locationApp)
         newfile_name = os.path.realpath(os.path.join(dirnames, newfile_name))
         try:
-            os.rename(os.path.realpath(locationApp), newfile_name)
+            os.rename(os.path.realpath(locationApp), newfile_name)  # Ubah nama file
         except:
             return False
-        return True
+        return True  # Kembalikan True jika rename berhasil
     except:
-        return False
+        return False  # Kembalikan False jika terjadi kesalahan
 
 
 def setupyinstaller(data: list):
+    """
+    Fungsi ini memproses daftar data, membersihkan elemen-elemen dalam daftar, dan mengubah nama modul-modul tertentu. 
+    
+    Hasil akhir adalah sebuah string yang memuat argumen --hidden-import untuk digunakan dalam PyInstaller agar modul-modul yang diperlukan diimpor secara eksplisit.
+    """
     xdata: list = []
     if data.__len__() > 0:
         for d in data:
@@ -236,6 +245,19 @@ def setupyinstaller(data: list):
 
 
 def install_script():
+    """
+    Script di atas adalah sebuah fungsi `install_script()` yang melakukan beberapa tugas instalasi, di antaranya:
+
+1. **Memeriksa dan mengenkripsi file**: Fungsi ini mengecek keberadaan file `supernano.py`, lalu menanyakan kepada pengguna apakah mereka ingin meng-install file `.exe`. Jika iya, file `supernano.py` dibaca, data lama (encoded_dataOLD) didekripsi dan diganti dengan data baru (encoded_dataNOW), lalu disimpan kembali.
+
+2. **Menjalankan PyInstaller**: Setelah file diperbarui, PyInstaller dijalankan untuk membuat executable dari file Python dengan menambahkan direktori `libs` dan `cache`.
+
+3. **Membersihkan file sementara**: File sementara seperti `supernano.py` dihapus setelah proses instalasi selesai.
+
+4. **Memproses versi package**: Jika file `supernano.py` tidak ada, fungsi akan mencari dan menampilkan versi modul yang tersedia. Pengguna bisa memilih versi tertentu untuk diunduh, kemudian script akan mengekstrak file yang diunduh dan menyiapkan instalasi.
+
+5. **Menginstal dependensi**: Fungsi juga menawarkan instalasi package dari `requirements.txt` sebelum menjalankan PyInstaller lagi untuk membuat file executable dengan versi yang dipilih.
+    """
     filemainapps = os.path.join(filedir, "supernano.py")
     shift = 4  # Shift untuk Caesar cipher
     if os.path.isfile(filemainapps):
