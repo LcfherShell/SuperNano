@@ -3,7 +3,7 @@ import os, sys, platform, argparse, install
 Platform = platform.platform().lower()
 mainfile = os.path.dirname(os.path.realpath(__file__)).replace("\\", "/")
 cureentPath = os.getcwd()
-os.chdir(mainfile)
+# os.chdir(mainfile)
 
 
 def parser():
@@ -13,18 +13,33 @@ def parser():
 
     # Argument untuk folder path
     parser.add_argument(
-        "folder_path", type=str, 
-        nargs='?',  # Mengindikasikan bahwa argumen ini bersifat opsional
-        default= '"{path}"'.format(path=".."),  #os.path.realpath(cureentPath) Nilai default jika tidak ada input
-        help="Path to the folder (can contain spaces)"
+        "folder_path",
+        type=str,
+        nargs="?",  # Mengindikasikan bahwa argumen ini bersifat opsional
+        default='"{path}"'.format(
+            path=".."
+        ),  # os.path.realpath(cureentPath) Nilai default jika tidak ada input
+        help="Path to the folder (can contain spaces)",
     )
 
     args = parser.parse_args()
 
     # Mengambil nilai folder_path dari argumen
     folder_path = args.folder_path
-    if folder_path.__len__()<=0 or not os.path.isdir(folder_path) or not os.path.isfile(folder_path):
-        folder_path = '"{path}"'.format(path=os.path.dirname(cureentPath))
+    if (
+        folder_path.__len__() <= 0
+        or not os.path.isdir(folder_path)
+        or not os.path.isfile(folder_path)
+    ):
+        if str(folder_path).startswith(("'", '"')) and str(folder_path).endswith(
+            ("'", '"')
+        ):
+            pass
+        else:
+            folder_path = '"{path}"'.format(path=os.path.dirname(cureentPath))
+            print(
+                "The specified folder could not be found. Please verify that the folder path you entered is correct and that the folder exists."
+            )
     return str(folder_path)
 
 
@@ -48,3 +63,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+else:
+    print("blocked_module")
