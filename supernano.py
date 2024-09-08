@@ -398,7 +398,7 @@ class SuperNano:
         def create_button(module_name):
             button = PlainButton(module_name)
 
-            urwid.connect_signal(button, "click", self.inspect_module, module_name)
+            urwid.connect_signal(button, "click", self.inspect_module, user_args=[module_name])
 
             return urwid.AttrMap(button, None, focus_map="reversed")
 
@@ -633,7 +633,7 @@ class SuperNano:
         def create_button(module_name):
             button = PlainButton(module_name)
 
-            urwid.connect_signal(button, "click", self.inspect_module, module_name)
+            urwid.connect_signal(button, "click", self.inspect_module, user_args=[module_name])
 
             return urwid.AttrMap(button, None, focus_map="reversed")
 
