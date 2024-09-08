@@ -17,8 +17,7 @@ setup(
     ],
     entry_points={
         "console_scripts": [
-            "supernano=supernano.main:main",  # Entry point untuk __main__.py
-            "isupernano=supernano.install:install_script",  # Entry point untuk install.py
+            "supernano=supernano.main:main"
         ],
     },
     classifiers=[
