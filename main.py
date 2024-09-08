@@ -13,13 +13,18 @@ def parser():
 
     # Argument untuk folder path
     parser.add_argument(
-        "folder_path", type=str, help="Path to the folder (can contain spaces)"
+        "folder_path", type=str, 
+        nargs='?',  # Mengindikasikan bahwa argumen ini bersifat opsional
+        default= '"{path}"'.format(path=".."),  #os.path.realpath(cureentPath) Nilai default jika tidak ada input
+        help="Path to the folder (can contain spaces)"
     )
 
     args = parser.parse_args()
 
     # Mengambil nilai folder_path dari argumen
     folder_path = args.folder_path
+    if folder_path.__len__()<=0 or not os.path.isdir(folder_path) or not os.path.isfile(folder_path):
+        folder_path = '"{path}"'.format(path=os.path.dirname(cureentPath))
     return str(folder_path)
 
 
