@@ -1,11 +1,9 @@
-import urwid
-
-import pyperclip
-
 import os, sys, shutil, logging, time, threading, argparse
-
+if getattr(sys, 'frozen', False):
+    __file__ = sys.executable
 from datetime import datetime
-
+import urwid
+import pyperclip
 
 try:
     from libs.helperegex import findpositions, rreplace
@@ -97,8 +95,9 @@ __version__ = "2.2.1"
 
 
 fileloogiing = os.path.join(thisfolder, "cache", "file_browser.log").replace("\\", "/")
-
-
+if not os.path.isdir(os.path.join(thisfolder, "cache")):
+    os.mkdir(os.path.join(thisfolder, "cache"))
+    
 if not os.path.isfile(fileloogiing):
     open(fileloogiing, "a+")
 
@@ -198,12 +197,12 @@ def parse_args():
             pass
 
         else:
-            logging.error(f"ERROR - {path} path cannot access")
+            logging.error("ERROR - {path} path cannot access".format(path=path))
 
             exit()
 
     else:
-        logging.error(f"ERROR - {path} path does not exist")
+        logging.error("ERROR - {path} path does not exist".format(path=path))
 
         exit()
 
@@ -232,7 +231,7 @@ class FileButton(PlainButton):
         self.functions = functions
 
         urwid.connect_signal(
-            self, "click", self.on_single_click, user_args=self.file_path
+            self, "click", self.on_single_click, user_args=[self.file_path]
         )
 
     def on_single_click(self, button, user_data=None):
@@ -296,7 +295,7 @@ class NumberedEdit(urwid.WidgetWrap):
 
         lines = text.splitlines()
 
-        line_numbers = "\n".join([f"{i+1:>3}" for i in range(len(lines))])
+        line_numbers = "\n".join(["{:>3}".format(i + 1) for i in range(len(lines))])
 
         self.line_numbers.set_text(line_numbers)
 
@@ -398,7 +397,7 @@ class SuperNano:
         def create_button(module_name):
             button = PlainButton(module_name)
 
-            urwid.connect_signal(button, "click", self.inspect_module, user_args=[module_name])
+            urwid.connect_signal(button, "click", self.inspect_module, module_name)
 
             return urwid.AttrMap(button, None, focus_map="reversed")
 
@@ -633,7 +632,7 @@ class SuperNano:
         def create_button(module_name):
             button = PlainButton(module_name)
 
-            urwid.connect_signal(button, "click", self.inspect_module, user_args=[module_name])
+            urwid.connect_signal(button, "click", self.inspect_module, module_name)
 
             return urwid.AttrMap(button, None, focus_map="reversed")
 
@@ -648,7 +647,7 @@ class SuperNano:
                 keys = result.keys()
 
                 if "classes" in keys or "functions" in keys or "variables" in keys:
-                    result_text = f"Module: {result['module']}\n\nGlobal Variables:\n"
+                    result_text = "Module: {modulen}\n\nGlobal Variables:\n".format(modulen = result['module'])
 
                     result_text += ", ".join(result["variables"])
 
@@ -657,7 +656,7 @@ class SuperNano:
 
                         for cls in result["classes"]:
                             if cls["name"]:
-                                result_text += f"Class: {cls['name']}\n"
+                                result_text += "Class: {classname}\n".format(classname=cls['name'])
 
                                 result_text += "  Variables:\n"
 
@@ -670,14 +669,14 @@ class SuperNano:
 
                                     for func in cls["functions"]:
                                         result_text += (
-                                            f" > {func['name']}{func['params']}\n\n"
+                                            " > {funcname}{parms}\n\n".format(funcname=func['name'], parms=func['params'])
                                         )
 
                     for funcs in result["functions"]:
                         if funcs["name"]:
-                            result_text += f"\nFunction: {funcs['name']}\n"
+                            result_text += "\nFunction: {funcname}\n".format(funcname=funcs['name'])
 
-                            result_text += f" > {funcs['name']}{funcs['params']}\n\n"
+                            result_text += " > {funcname}{parms}\n\n".format(funcname=funcs['name'], parms=funcs['params'])
 
                     self.Text_Deinspect_modules_from_package_Python.set_text(
                         result_text
@@ -773,7 +772,7 @@ class SuperNano:
 
             files.append(urwid.AttrMap(button, None, focus_map="reversed"))
 
-        for f in os.listdir(f"{self.current_path}"):
+        for f in os.listdir("{msg}".format(msg=self.current_path)):
             if os.path.isdir(resolve_relative_path(self.current_path, f)):
                 f = f + "/"
 
@@ -787,6 +786,7 @@ class SuperNano:
 
     @complex_handle_errors(loggering=logging, nomessagesNormal=False)
     def renameORcreatedPOP(self):
+        "Menyiapkan konten dan layout untuk menu popup rename dan created"
         select = urwid.Edit("Search or Create", "")
         replaces = SaveableEdit("Replace         ", "")
 
@@ -794,7 +794,7 @@ class SuperNano:
             slect = select.get_edit_text().strip()
             if slect.__len__() <= 0:
                 return
-            getselect = [f for f in os.listdir(f"{self.current_path}") if slect in f]
+            getselect = [f for f in os.listdir("{msg}".format(msg=self.current_path)) if slect in f]
             if getselect and replaces.get_edit_text():
                 _y = replaces.get_edit_text().strip()
                 if isvalidate_folder(_y):
@@ -805,9 +805,9 @@ class SuperNano:
                         selecrepcae = resolve_relative_path(self.current_path, _y)
                         if os.path.isdir(selecfolder) or os.path.isfile(selecfolder):
                             os.rename(selecfolder, selecrepcae)
-                        ms = str(f"Success renaming item")
+                        ms = str("Success renaming item")
                     except:
-                        ms = str(f"Failed renaming item: {getselect[0]}")
+                        ms = str("Failed renaming item: {msg}".format(msg=getselect[0]))
                 else:
                     ms = str("Item to rename not found")
             else:
@@ -897,7 +897,7 @@ class SuperNano:
         elif key in ("f1", "ctrl e", "ctrl E"):
             self.current_focus = 1 if self.current_focus == 0 else 0
 
-            self.status_msg_footer_text.set_text(f"focus {self.current_focus}")
+            self.status_msg_footer_text.set_text("focus {msg}".format(msg=self.current_focus))
 
     @complex_handle_errors(loggering=logging, nomessagesNormal=False)
     def get_current_edit(self):
@@ -1075,7 +1075,7 @@ class SuperNano:
 
         if self.current_file_name:
             file_path = os.path.join(self.current_path, self.current_file_name)
-
+        
             if os.path.isfile(file_path):
                 try:
                     with open(
@@ -1168,7 +1168,7 @@ class SuperNano:
 
         # Pisahkan teks menjadi sebelum, pencarian, dan sesudahnya
 
-        for x in findpositions(f"{search_text}", text):
+        for x in findpositions("{msg}".format(msg=search_text), text):
             if x:
                 _x = list(x)
 
@@ -1229,12 +1229,12 @@ class SuperNano:
                             if isvalidate_folder(_y):
                                 search_query = str(create_file_or_folder(search_query))
                             else:
-                                search_query = "{search_query} is Failed"
+                                search_query = "{search} is Failed".format(search=search_query)
                         else:
                             if isvalidate_filename(_y):
                                 search_query = str(create_file_or_folder(search_query))
                             else:
-                                search_query = "{search_query} is Failed"
+                                search_query = "{search} is Failed".format(search=search_query)
 
                         self.update_ui()
 
@@ -1248,7 +1248,7 @@ class SuperNano:
                     self.file_list[:] = self.get_file_list()
 
                 self.status_msg_footer_text.set_text(
-                    f"Search results for '{search_query}'"
+                    "Search results for {msg}".format(msg=search_query)
                 )
 
             else:
@@ -1272,14 +1272,14 @@ class SuperNano:
                     self.file_list[:] = self.create_file_list(search_resultsFile)
 
                     self.status_msg_footer_text.set_text(
-                        f"Search results for '{search_query}'"
+                        "Search results for {msg}".format(msg=search_query)
                     )
 
                 elif search_resultsFile:
                     self.file_list[:] = self.create_file_list(search_resultsFile)
 
                     self.status_msg_footer_text.set_text(
-                        f"Search results for '{search_query}'"
+                        "Search results for {msg}".format(msg=search_query)
                     )
 
                 else:
@@ -1291,14 +1291,14 @@ class SuperNano:
                         self.file_list[:] = self.get_file_list()
 
                         self.status_msg_footer_text.set_text(
-                            f"Search results for '{search_query}'"
+                            "Search results for {msg}".format(msg=search_query)
                         )
 
                     elif search_resultsHighlight_Text and not search_query.startswith(
                         "@[files]"
                     ):
                         self.status_msg_footer_text.set_text(
-                            f"Search results for '{search_query}' {search_resultsHighlight_Text}"
+                            "Search results for '{msg}' {msg1}".format(msg=search_query, msg1=search_resultsHighlight_Text)
                         )
 
                     else:
@@ -1339,7 +1339,7 @@ class SuperNano:
                                             os.rename(oldfilesorfolder, newplace)
 
                                             self.status_msg_footer_text.set_text(
-                                                f"Rename {getREName[0]} success"
+                                                "Rename {msg} success".format(msg=getREName[0])
                                             )
 
                                             self.update_ui()
@@ -1351,7 +1351,7 @@ class SuperNano:
 
                         else:
                             self.status_msg_footer_text.set_text(
-                                f"Search results for {search_query}"
+                                "Search results for {msg}".format(msg=search_query)
                             )
 
         else:
