@@ -1,5 +1,7 @@
 import py_cui
 import os, sys, time, argparse, logging
+if getattr(sys, 'frozen', False):
+    __file__ = sys.executable
 from typing import List, Tuple, Any
 from datetime import datetime
 from string import ascii_letters, punctuation
